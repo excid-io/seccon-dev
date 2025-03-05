@@ -20,37 +20,23 @@ gitleaks:
     name: zricethezav/gitleaks
     entrypoint: [""]
   script:
-    - gitleaks directory . --verbose -f json -r detect_gitleaks_dir.json
+    - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json
+    - gitleaks git . --verbose -f json -r gitleaks_detect_git.json
   allow_failure: true
   artifacts:
     when: always
     paths:
-      - detect_gitleaks_dir.json
-
-gitleaks_protect:
-  stage: secret_scanning
-  image:
-    name: zricethezav/gitleaks
-    entrypoint: [""]
-  script:
-    - gitleaks protect --verbose --source . -f json -r protect_gitleaks.json
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-    - protect_gitleaks.json
-  dependencies:
-    - gitleaks
-
+      - gitleaks_detect_dir.json
+      - gitleaks_detect_git.json
 
 njsscan:
   stage: sast
-  needs: ["gitleaks_protect"]
+  needs: ["gitleaks"]
   image: python
   before_script:
     - pip3 install --upgrade njsscan
   script:
-    - njsscan --exit-warning . --sarif -o njsscan.sarif
+    - njsscan . --exit-warning --sarif -o njsscan.sarif
   allow_failure: true
   artifacts:
     when: always
@@ -59,60 +45,49 @@ njsscan:
 
 semgrep:
   stage: sast
-  needs: ["gitleaks_protect"]
+  needs: ["gitleaks"]
   image: returntocorp/semgrep
   variables:
     SEMGREP_RULES: p/javascript
   script:
-    - semgrep ci --json --output semgrep.json
+    - semgrep scan --json --output semgrep.json
   allow_failure: true
   artifacts:
     when: always
     paths:
     - semgrep.json
 
-sonarqube-check:
-  stage: sast
-  needs: ["gitleaks_protect"]
-  image:
-    name: sonarsource/sonar-scanner-cli:5.0
-    entrypoint: [""]
+sonarqube:
+  image: 
+      name: sonarsource/sonar-scanner-cli:11
+      entrypoint: [""]
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-    GIT_DEPTH: "0"
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  stage: sast  
   cache:
-    key: "${CI_JOB_NAME}"
+    policy: pull-push
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
     paths:
-    - .sonar/cache
-    - sonar-scanner/
-  script:
+      - "${SONAR_USER_HOME}/cache"
+      - sonar-scanner/
+  script: 
     - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
   allow_failure: true
-
-sonarqube-vulnerability-report:
-  stage: sast
-  script:
-    - apk update && apk --no-cache add curl
-    - 'curl -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/issues/gitlab_sast_export?projectKey=selft-security&branch=${CI_COMMIT_BRANCH}&pullRequest=${CI_MERGE_REQUEST_IID}" -o gl-sast-sonar-report.json'
-  allow_failure: true
-  artifacts:
-    expire_in: 1 day
-    reports:
-      sast: gl-sast-sonar-report.json
-  dependencies:
-    - sonarqube-check
-
+  
 retire:
   stage: sca
-  image: ruby:3.0
-  needs: ["gitleaks_protect"]
+  image: node:4.2.2
+  needs: ["gitleaks"]
+  before_script:
+    - npm install -g retire
   script:
-    - echo 'sth..'
+    - retire --outputformat cyclonedx --exitwith 0 --outputpath retirejs.xml
+  artifacts:
+    reports:
+      sast: retirejs.xml
 
 docker-build:
-  # artifacts:
-  #   paths:
-  #     - test.txt
   # Use the official docker image.
   stage: build_image
   image: docker
