@@ -83,10 +83,9 @@ stages:
 docker-build:
   stage: build_image
   # needs: ["retire"]
-  image: docker
+  image: docker:latest
   services:
     - name: docker:dind
-      command: ["--tls=false"]
   variables:
     DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   before_script:
