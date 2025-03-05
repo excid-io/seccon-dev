@@ -77,7 +77,7 @@ sonarqube:
   
 retire:
   stage: sca
-  image: node:4.2.2
+  image: node:latest
   needs: ["njsscan", "semgrep", "sonarqube"]
   before_script:
     - npm install -g retire
