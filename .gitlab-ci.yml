@@ -90,6 +90,7 @@ retire:
 docker-build:
   # Use the official docker image.
   stage: build_image
+  needs: ["retire"]
   image: docker
   services:
     - name: docker:dind
@@ -116,12 +117,12 @@ docker-build:
 
 syft_sbom:
   stage: scan_image
-  # needs: ["docker-build"]
+  needs: ["docker-build"]
   image:
     name: registry.gitlab.com/gitlab-ci-utils/container-images/syft:latest
     entrypoint: [""]
-  # before_script:
-  #   - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - /syft/syft $CI_REGISTRY_IMAGE:latest -o cyclonedx-json=syft.cdx.json
   artifacts:
