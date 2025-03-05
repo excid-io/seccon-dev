@@ -141,6 +141,7 @@ deploy:
   stage: deploy
   # needs: ["scan_image_trivy", "syft_sbom"]
   before_script:
+    - echo "deb http://gr.archive.ubuntu.com/ubuntu ubnt" >> /etc/apt/sources.list
     - apt-get update && apt-get install openssh
     - apt-get install sshpass
   script:
