@@ -82,7 +82,7 @@ stages:
 
 docker-build:
   stage: build_image
-  needs: ["retire"]
+  # needs: ["retire"]
   image: docker
   services:
     - name: docker:dind
