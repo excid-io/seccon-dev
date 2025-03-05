@@ -12,9 +12,6 @@ detect_gitleaks_dir.json
 *.der
 *.priv
 
-### dotenv ###
-.env
-
 ### Node ###
 # Logs
 logs
