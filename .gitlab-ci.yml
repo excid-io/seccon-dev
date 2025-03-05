@@ -90,7 +90,7 @@ retire:
 
 docker-build:
   stage: build_image
-  needs: ["retire"]
+  # needs: ["retire"]
   # image: docker
   # services:
   #   - name: docker:dind
@@ -117,8 +117,8 @@ docker-build:
   image:
     name: gcr.io/kaniko-project/executor:v1.23.2-debug
     entrypoint: [""]
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  # before_script:
+  #   - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
   - /kaniko/executor
     --context $CI_PROJECT_DIR
