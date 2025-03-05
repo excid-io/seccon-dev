@@ -10,6 +10,7 @@ stages:
   - sast
   - sca
   - build_image
+  - push_image
   - scan_image
   - deploy
   - dast_zap
@@ -131,7 +132,7 @@ docker-build:
     when: on_success
 
 docker-push:
-  stage: ["build_image"]
+  stage: push_image
   needs: ["build-docker"]
   image:
     name: gcr.io/go-containerregistry/crane:debug
