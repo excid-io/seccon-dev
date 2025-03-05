@@ -88,7 +88,6 @@ retire:
       sast: retirejs.xml
 
 docker-build:
-  # Use the official docker image.
   stage: build_image
   needs: ["retire"]
   image: docker
