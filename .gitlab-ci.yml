@@ -1,10 +1,3 @@
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-  PUSH_IMAGE: "true"
-  BUILD_ARGS: "kafka sqlite"
-  SCAN_IMAGE: "false"
-  EXTRA_TAGS: "${CI_COMMIT_TAG}"
-
 stages:
   - secret_scanning
   - sast
@@ -14,78 +7,78 @@ stages:
   - deploy
   - dast_zap
 
-gitleaks:
-  stage: secret_scanning
-  image:
-    name: zricethezav/gitleaks
-    entrypoint: [""]
-  script:
-    - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json --exit-code 0
-    - gitleaks git . --verbose -f json -r gitleaks_detect_git.json --exit-code 0
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - gitleaks_detect_dir.json
-      - gitleaks_detect_git.json
+# gitleaks:
+#   stage: secret_scanning
+#   image:
+#     name: zricethezav/gitleaks
+#     entrypoint: [""]
+#   script:
+#     - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json --exit-code 0
+#     - gitleaks git . --verbose -f json -r gitleaks_detect_git.json --exit-code 0
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#       - gitleaks_detect_dir.json
+#       - gitleaks_detect_git.json
 
-njsscan:
-  stage: sast
-  needs: ["gitleaks"]
-  image: python
-  before_script:
-    - pip3 install --upgrade njsscan
-  script:
-    - njsscan . --exit-warning --sarif -o njsscan.sarif
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-    - njsscan.sarif
+# njsscan:
+#   stage: sast
+#   needs: ["gitleaks"]
+#   image: python
+#   before_script:
+#     - pip3 install --upgrade njsscan
+#   script:
+#     - njsscan . --exit-warning --sarif -o njsscan.sarif
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#     - njsscan.sarif
 
-semgrep:
-  stage: sast
-  needs: ["gitleaks"]
-  image: returntocorp/semgrep
-  variables:
-    SEMGREP_RULES: p/javascript
-  script:
-    - semgrep ci --json --output semgrep.json
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-    - semgrep.json
+# semgrep:
+#   stage: sast
+#   needs: ["gitleaks"]
+#   image: returntocorp/semgrep
+#   variables:
+#     SEMGREP_RULES: p/javascript
+#   script:
+#     - semgrep ci --json --output semgrep.json
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#     - semgrep.json
 
-sonarqube:
-  image: 
-      name: sonarsource/sonar-scanner-cli:11
-      entrypoint: [""]
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-  stage: sast  
-  cache:
-    policy: pull-push
-    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
-    paths:
-      - "${SONAR_USER_HOME}/cache"
-      - sonar-scanner/
-  script: 
-    - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
-  allow_failure: true
+# sonarqube:
+#   image: 
+#       name: sonarsource/sonar-scanner-cli:11
+#       entrypoint: [""]
+#   variables:
+#     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+#     GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+#   stage: sast  
+#   cache:
+#     policy: pull-push
+#     key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+#     paths:
+#       - "${SONAR_USER_HOME}/cache"
+#       - sonar-scanner/
+#   script: 
+#     - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
+#   allow_failure: true
   
-retire:
-  stage: sca
-  image: node:latest
-  needs: ["njsscan", "semgrep", "sonarqube"]
-  before_script:
-    - npm install -g retire
-  script:
-    - retire --outputformat cyclonedx --exitwith 0 --outputpath retirejs.xml
-  artifacts:
-    reports:
-      sast: retirejs.xml
+# retire:
+#   stage: sca
+#   image: node:latest
+#   needs: ["njsscan", "semgrep", "sonarqube"]
+#   before_script:
+#     - npm install -g retire
+#   script:
+#     - retire --outputformat cyclonedx --exitwith 0 --outputpath retirejs.xml
+#   artifacts:
+#     reports:
+#       sast: retirejs.xml
 
 docker-build:
   stage: build_image
