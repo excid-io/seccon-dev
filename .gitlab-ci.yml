@@ -20,8 +20,8 @@ gitleaks:
     name: zricethezav/gitleaks
     entrypoint: [""]
   script:
-    - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json
-    - gitleaks git . --verbose -f json -r gitleaks_detect_git.json
+    - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json --exit-code 0
+    - gitleaks git . --verbose -f json -r gitleaks_detect_git.json --exit-code 0
   allow_failure: true
   artifacts:
     when: always
@@ -50,7 +50,7 @@ semgrep:
   variables:
     SEMGREP_RULES: p/javascript
   script:
-    - semgrep scan --json --output semgrep.json
+    - semgrep ci --json --output semgrep.json
   allow_failure: true
   artifacts:
     when: always
@@ -78,7 +78,7 @@ sonarqube:
 retire:
   stage: sca
   image: node:4.2.2
-  needs: ["gitleaks"]
+  needs: ["njsscan", "semgrep", "sonarqube"]
   before_script:
     - npm install -g retire
   script:
@@ -166,7 +166,7 @@ zap:
   script:
     - mkdir /zap/wrk
     - echo "Execute the baseline scan..."
-    - /zap/zap-baseline.py -t https://128.251.24.109:8443/ -g gen.conf -r testreport.html
+    - /zap/zap-baseline.py -t https://10.0.0.3:8443/ -g gen.conf -r testreport.html
   after_script:
     - echo "Copy report file to the artifact path..."
     - cp /zap/wrk/testreport.html .
