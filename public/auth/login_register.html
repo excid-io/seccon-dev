@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="login_register.css">
+    <title>Dice Games| Login & Registration</title>
+    <script defer src="./auth_client.js"></script>
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
+        integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+
+    <link href="https://fonts.googleapis.com/css?family=Aleo|Slabo+27px" rel="stylesheet">
+</head>
+
+<body>
+    <div class="wrapper">
+        <nav class="nav">
+            <div class="nav-menu" id="navMenu">
+            </div>
+            <div class="nav-button">
+                <button class="btn white-btn" id="loginBtn" onclick="show_login()">Sign In</button>
+                <button class="btn" id="registerBtn" onclick="show_register()">Sign Up</button>
+            </div>
+
+            <div class="nav-menu-btn">
+                <i class="bx bx-menu" onclick="myMenuFunction()"></i>
+            </div>
+
+        </nav>
+
+        <!----------------------------- Form box ----------------------------------->
+        <div class="form-box">
+
+            <!------------------- login form -------------------------->
+
+            <div class="login-container" id="login">
+
+                <div class="input-box">
+                    <input type="text" class="input-field" id="login_username" placeholder="Username">
+                    <i class="bx bx-user"></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" class="input-field" id="login_password" placeholder="Password">
+                    <i class="bx bx-lock-alt"></i>
+                </div>
+                <div class="input-box">
+                    <input type="submit" id="submit_login_btn" onclick="login()" class="submit" value="Sign In">
+                </div>
+                <div class="two-col">
+                </div>
+            </div>
+
+            <!------------------- registration form -------------------------->
+            <div class="register-container" id="register">
+
+                <div class="two-forms">
+                    <div class="input-box">
+                        <input type="text" class="input-field" id="register_first_name" placeholder="Firstname">
+                        <i class="bx bx-user"></i>
+                    </div>
+                    <div class="input-box">
+                        <input type="text" class="input-field" id="register_last_name" placeholder="Lastname">
+                        <i class="bx bx-user"></i>
+                    </div>
+                </div>
+                <div class="input-box">
+                    <input type="username" class="input-field" id="register_username" placeholder="Username">
+                    <i class="bx bx-user"></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" class="input-field" id="register_password" placeholder="Password"
+                        onInput="check()">
+                    <i class="bx bx-lock-alt"></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" class="input-field" id="register_password2" placeholder="Confirm Password">
+                    <i class="bx bx-lock-alt"></i>
+                </div>
+
+                <!-- policy start -->
+                <div class="policy-container">
+                    <div id="check0">
+                        <i class="far fa-check-circle"></i> <span> Length more than 8.</span>
+                    </div>
+                    <div id="check1">
+                        <i class="far fa-check-circle"></i> <span> Length less than 20.</span>
+                    </div>
+                    <div id="check2">
+                        <i class="far fa-check-circle"></i> <span> Contains alphanumerical characters.</span>
+                    </div>
+                    <div id="check3">
+                        <i class="far fa-check-circle"></i> <span>Contains at least one special character.</span>
+                    </div>
+                    <div id="check4">
+                        <i class="far fa-check-circle"></i> <span>Shouldn't contain spaces.</span>
+                    </div>
+                </div>
+                <!-- policy end -->
+
+
+                <div class="input-box">
+                    <input type="submit" class="submit" id="submit_register_button" onclick="register()"
+                        value="Register">
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
