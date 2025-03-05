@@ -133,7 +133,7 @@ docker-build:
 
 docker-push:
   stage: push_image
-  needs: ["build-docker"]
+  needs: ["docker-build"]
   image:
     name: gcr.io/go-containerregistry/crane:debug
     entrypoint: [""]
