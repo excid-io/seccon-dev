@@ -6,140 +6,114 @@ variables:
   EXTRA_TAGS: "${CI_COMMIT_TAG}"
 
 stages:
-  # - secret_scanning
-  # - sast
-  # - sca
+  - secret_scanning
+  - sast
+  - sca
   - build_image
-  - push_image
   - scan_image
   - deploy
   - dast_zap
 
-# gitleaks:
-#   stage: secret_scanning
-#   image:
-#     name: zricethezav/gitleaks
-#     entrypoint: [""]
-#   script:
-#     - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json --exit-code 0
-#     - gitleaks git . --verbose -f json -r gitleaks_detect_git.json --exit-code 0
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - gitleaks_detect_dir.json
-#       - gitleaks_detect_git.json
+gitleaks:
+  stage: secret_scanning
+  image:
+    name: zricethezav/gitleaks
+    entrypoint: [""]
+  script:
+    - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json --exit-code 0
+    - gitleaks git . --verbose -f json -r gitleaks_detect_git.json --exit-code 0
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - gitleaks_detect_dir.json
+      - gitleaks_detect_git.json
 
-# njsscan:
-#   stage: sast
-#   needs: ["gitleaks"]
-#   image: python
-#   before_script:
-#     - pip3 install --upgrade njsscan
-#   script:
-#     - njsscan . --exit-warning --sarif -o njsscan.sarif
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#     - njsscan.sarif
+njsscan:
+  stage: sast
+  needs: ["gitleaks"]
+  image: python
+  before_script:
+    - pip3 install --upgrade njsscan
+  script:
+    - njsscan . --exit-warning --sarif -o njsscan.sarif
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+    - njsscan.sarif
 
-# semgrep:
-#   stage: sast
-#   needs: ["gitleaks"]
-#   image: returntocorp/semgrep
-#   variables:
-#     SEMGREP_RULES: p/javascript
-#   script:
-#     - semgrep ci --json --output semgrep.json
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#     - semgrep.json
+semgrep:
+  stage: sast
+  needs: ["gitleaks"]
+  image: returntocorp/semgrep
+  variables:
+    SEMGREP_RULES: p/javascript
+  script:
+    - semgrep ci --json --output semgrep.json
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+    - semgrep.json
 
-# sonarqube:
-#   image: 
-#       name: sonarsource/sonar-scanner-cli:11
-#       entrypoint: [""]
-#   variables:
-#     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-#     GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-#   stage: sast  
-#   cache:
-#     policy: pull-push
-#     key: "sonar-cache-$CI_COMMIT_REF_SLUG"
-#     paths:
-#       - "${SONAR_USER_HOME}/cache"
-#       - sonar-scanner/
-#   script: 
-#     - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
-#   allow_failure: true
+sonarqube:
+  image: 
+      name: sonarsource/sonar-scanner-cli:11
+      entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  stage: sast  
+  cache:
+    policy: pull-push
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+    paths:
+      - "${SONAR_USER_HOME}/cache"
+      - sonar-scanner/
+  script: 
+    - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
+  allow_failure: true
   
-# retire:
-#   stage: sca
-#   image: node:latest
-#   needs: ["njsscan", "semgrep", "sonarqube"]
-#   before_script:
-#     - npm install -g retire
-#   script:
-#     - retire --outputformat cyclonedx --exitwith 0 --outputpath retirejs.xml
-#   artifacts:
-#     reports:
-#       sast: retirejs.xml
+retire:
+  stage: sca
+  image: node:latest
+  needs: ["njsscan", "semgrep", "sonarqube"]
+  before_script:
+    - npm install -g retire
+  script:
+    - retire --outputformat cyclonedx --exitwith 0 --outputpath retirejs.xml
+  artifacts:
+    reports:
+      sast: retirejs.xml
 
 docker-build:
   stage: build_image
-  # needs: ["retire"]
-  # image: docker
-  # services:
-  #   - name: docker:dind
-  #     alias: docker
-  # variables:
-  #   DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-  # before_script:
-  #   - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  # # All branches are tagged with $DOCKER_IMAGE_NAME (defaults to commit ref slug)
-  # # Default branch is also tagged with `latest`
-  # script:
-  #   - docker build --pull -t "$DOCKER_IMAGE_NAME" .
-  #   - docker push "$DOCKER_IMAGE_NAME"
-  #   - |
-  #     if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-  #       docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
-  #       docker push "$CI_REGISTRY_IMAGE:latest"
-  #     fi
-  # # Run this job in a branch where a Dockerfile exists
-  # rules:
-  #   - if: $CI_COMMIT_BRANCH
-  #     exists:
-  #       - Dockerfile
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  # before_script:
-  #   - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  needs: ["retire"]
+  image: docker
+  services:
+    - name: docker:dind
+      alias: docker
+  variables:
+    DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  # All branches are tagged with $DOCKER_IMAGE_NAME (defaults to commit ref slug)
+  # Default branch is also tagged with `latest`
   script:
-  - /kaniko/executor
-    --context $CI_PROJECT_DIR
-    --dockerfile $CI_PROJECT_DIR/Dockerfile
-    --no-push
-    --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
-    --tar-path ${CI_REGISTRY_IMAGE}.tar
-  artifacts:
-    paths:
-    - image.tar
-    when: on_success
-
-docker-push:
-  stage: push_image
-  needs: ["docker-build"]
-  image:
-    name: gcr.io/go-containerregistry/crane:debug
-    entrypoint: [""]
-  script:
-  - crane auth login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  - crane push image.tar "${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
+    - docker build --pull -t "$DOCKER_IMAGE_NAME" .
+    - docker push "$DOCKER_IMAGE_NAME"
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
+        docker push "$CI_REGISTRY_IMAGE:latest"
+      fi
+  # Run this job in a branch where a Dockerfile exists
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      exists:
+        - Dockerfile
 
 syft_sbom:
   stage: scan_image
