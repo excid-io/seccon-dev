@@ -133,7 +133,6 @@ syft_sbom:
         - syft.cdx.json
   allow_failure: true
 
-
 scan_image_trivy:
   stage: scan_image
   needs: ["docker-build"]
