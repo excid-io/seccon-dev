@@ -165,7 +165,7 @@ trivy_sbom:
 ################## attestation ##################
 
 staas-provenance:
-  stage: attestation
+  stage: attestations
   needs: ["docker-build"]
   image: python:3.9
   before_script:
@@ -179,7 +179,7 @@ staas-provenance:
   allow_failure: true
 
 staas-sbom:
-  stage: attestation
+  stage: attestations
   needs: ["scan_image_trivy"]
   image: python:3.9
   script:
