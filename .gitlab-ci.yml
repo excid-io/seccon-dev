@@ -192,6 +192,8 @@ staas-sbom:
     - pwd
     - ls -la 
     - export COMMENT=sbom
+    - unzip artifacts.zip -d sbom-artifacts
+    - mv sbom-artifacts/img.sbom.json img.sbom.json
     - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
   after_script:
     - cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle YOUR_FILE
