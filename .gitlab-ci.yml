@@ -91,8 +91,9 @@ docker-build:
     SECURE_FILES_DOWNLOAD_PATH: './'
   before_script:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - apk update && apk add curl
   script:
-    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | bash
+    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | sh
     - mkdir security
     - mv FAIRDICE.crt FAIRDICE.key security
     - docker build -t "$DOCKER_IMAGE_NAME" .

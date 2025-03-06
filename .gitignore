@@ -5,12 +5,12 @@ detect_gitleaks_dir.json
 
 
 ### certificates ###
-# *.pem
-# *.key
-# *.crt
-# *.cer
-# *.der
-# *.priv
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.priv
 
 ### Node ###
 # Logs
