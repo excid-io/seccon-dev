@@ -169,7 +169,7 @@ staas-provenance:
   needs: ["docker-build"]
   image: python:3.9
   before_script:
-    - apt-get update && apt-get install jq
+    - apt-get update && apt-get install jq -y
   script:
     - |
       export IMG_HASH_B64=$(cat img.hash | base64)
@@ -182,6 +182,9 @@ staas-sbom:
   stage: attestations
   needs: ["trivy_sbom"]
   image: python:3.9
+  before_script:
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - chmod +x cosign
   script:
     - export COMMENT=sbom
     - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
