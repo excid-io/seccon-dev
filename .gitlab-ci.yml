@@ -112,17 +112,18 @@ stages:
 #       exists:
 #         - Dockerfile
 
-syft_sbom:
+docker-build:
   stage: scan_image
-  # needs: ["docker-build"]
-  image:
-    name: registry.gitlab.com/gitlab-ci-utils/container-images/syft:latest
-    entrypoint: [""]
+  # needs: ["retire"]
+  image: docker:latest
+  services:
+    - name: docker:dind
   before_script:
-    - apk update && apk add cosign && apk add jq
+    - apk update && apk add cosign && apk add jq && apk add syft
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     # - /syft/syft $CI_REGISTRY_IMAGE:latest -o cyclonedx-json=syft.cdx.json
-    - /syft/syft attest $CI_REGISTRY_IMAGE:latest -o cyclonedx-json
+    - syft attest $CI_REGISTRY_IMAGE:latest -o cyclonedx-json
   after_script:
     - cosign download attestation $CI_REGISTRY_IMAGE:latest | jq . > image.sbom.att.json
     - cosign verify-attestation $CI_REGISTRY_IMAGE:latest
@@ -131,6 +132,26 @@ syft_sbom:
     paths:
       - image.sbom.att.json
   allow_failure: true
+
+# syft_sbom:
+#   stage: scan_image
+#   # needs: ["docker-build"]
+#   image:
+#     name: registry.gitlab.com/gitlab-ci-utils/container-images/syft:latest
+#     entrypoint: [""]
+#   before_script:
+#     - apk update && apk add cosign && apk add jq
+#   script:
+#     # - /syft/syft $CI_REGISTRY_IMAGE:latest -o cyclonedx-json=syft.cdx.json
+#     - /syft/syft attest $CI_REGISTRY_IMAGE:latest -o cyclonedx-json
+#   after_script:
+#     - cosign download attestation $CI_REGISTRY_IMAGE:latest | jq . > image.sbom.att.json
+#     - cosign verify-attestation $CI_REGISTRY_IMAGE:latest
+#   artifacts:
+#     when: always
+#     paths:
+#       - image.sbom.att.json
+#   allow_failure: true
 
 # scan_image_trivy:
 #   stage: scan_image
