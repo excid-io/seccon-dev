@@ -158,8 +158,8 @@ zap:
     - mkdir /zap/wrk
   script:
     - /zap/zap-full-scan.py -t https://128.251.24.109:8443/ -g gen.conf -r zapreport.html -I
-    - cp /zap/wrk/zapreport.xml zapreport.html
+    - cp /zap/wrk/zapreport.html zapreport.html
   artifacts:
     when: always
     paths:
-      - /zapreport.html
+      - zapreport.html
