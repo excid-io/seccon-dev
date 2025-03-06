@@ -180,7 +180,7 @@ staas-provenance:
 
 staas-sbom:
   stage: attestations
-  needs: ["scan_image_trivy"]
+  needs: ["trivy_sbom"]
   image: python:3.9
   script:
     - export COMMENT=sbom
