@@ -167,26 +167,26 @@ trivy_sbom:
 staas-provenance:
   stage: attestation
   needs: ["docker-build"]
+  image: python:3.9
   before_script:
     - apt-get update && apt-get install jq
   script:
     - |
       export IMG_HASH_B64=$(cat img.hash | base64)
       jq --arg IMG_HASH_B64 "$IMG_HASH_B64" '.subject = [{"name":$CI_REGISTRY_IMAGE, "digest":{"sha256":$IMG_HASH_B64}}]' hash_provenance > image.prov.json
-      export IMG_PROVENANCE_HASH=$(sha256sum image.prov.json | awk '{print $1}')
-      export COMMENT=testcomment
-      curl https://staas.excid.io/Api/Sign -H "Authorization: Bearer $STAAS_API_TOKEN" -H "" -d "{"HashBase64":"$IMG_PROVENANCE_HASH", "Comment":"$COMMENT"}"
+    - export COMMENT=provenance
+    - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   allow_failure: true
 
 staas-sbom:
   stage: attestation
   needs: ["scan_image_trivy"]
+  image: python:3.9
   script:
-    - |
-      export SBOM_HASH_B64=$(sha256sum img.sbom.json | awk '{print $1}')
-      export COMMENT=testcomment
-      curl https://staas.excid.io/Api/Sign -H "Authorization: Bearer $STAAS_API_TOKEN" -H "" -d "{"HashBase64":"$IMG_PROVENANCE_HASH", "Comment":"$COMMENT"}"
-
+    - export COMMENT=sbom
+    - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
+  allow_failure: true
+  
 ################## deploy ##################
 
 deploy:
