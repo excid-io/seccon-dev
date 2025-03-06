@@ -153,7 +153,6 @@ zap:
   # needs: ["deploy"]
   image: 
     name: ghcr.io/zaproxy/zaproxy:stable
-    entrypoint: ["/zap"]
   allow_failure: true
   script:
     - pwd
