@@ -6,6 +6,7 @@ detect_gitleaks_dir.json
 
 ### certificates ###
 *.pem
+!ca.pem
 *.key
 *.crt
 *.cer
