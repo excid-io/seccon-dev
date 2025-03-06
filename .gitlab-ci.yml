@@ -80,28 +80,28 @@ stages:
 #     reports:
 #       sast: retirejs.xml
 
-docker-build:
-  stage: build_image
-  # needs: ["retire"]
-  image: docker:latest
-  services:
-    - name: docker:dind
-  variables:
-    DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-  script:
-    - docker build -t "$DOCKER_IMAGE_NAME" .
-    - docker push "$DOCKER_IMAGE_NAME"
-    - |
-      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-        docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
-        docker push "$CI_REGISTRY_IMAGE:latest"
-      fi
-  rules:
-    - if: $CI_COMMIT_BRANCH
-      exists:
-        - Dockerfile
+# docker-build:
+#   stage: build_image
+#   # needs: ["retire"]
+#   image: docker:latest
+#   services:
+#     - name: docker:dind
+#   variables:
+#     DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+#   before_script:
+#     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+#   script:
+#     - docker build -t "$DOCKER_IMAGE_NAME" .
+#     - docker push "$DOCKER_IMAGE_NAME"
+#     - |
+#       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+#         docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
+#         docker push "$CI_REGISTRY_IMAGE:latest"
+#       fi
+#   rules:
+#     - if: $CI_COMMIT_BRANCH
+#       exists:
+#         - Dockerfile
 
 # syft_sbom:
 #   stage: scan_image
@@ -137,30 +137,25 @@ docker-build:
 #     - trivy image "$CI_REGISTRY_IMAGE:latest"
 #   allow_failure: true
  
-deploy:
-  stage: deploy
-  # needs: ["scan_image_trivy", "syft_sbom"]
-  before_script:
-    - echo "deb http://gr.archive.ubuntu.com/ubuntu ubnt main" >> /etc/apt/sources.list
-    - apt-get update && apt-get install openssh
-    - apt-get install sshpass
-  script:
-    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@128.251.24.109 docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@128.251.24.109 docker run -it -d --rm -p 8080:8080 -p 8443:8443 "$CI_REGISTRY_IMAGE:latest" 
+# deploy:
+#   stage: deploy
+#   # needs: ["scan_image_trivy", "syft_sbom"]
+#   before_script:
+#     - echo "deb http://gr.archive.ubuntu.com/ubuntu ubnt main" >> /etc/apt/sources.list
+#     - apt-get update && apt-get install openssh
+#     - apt-get install sshpass
+#   script:
+#     - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@128.251.24.109 docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+#     - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@128.251.24.109 docker run -it -d --rm -p 8080:8080 -p 8443:8443 "$CI_REGISTRY_IMAGE:latest" 
 
 zap:
   stage: dast_zap
-  needs: ["deploy"]
-  image: owasp/zap2docker-stable:latest
+  # needs: ["deploy"]
+  image: ghcr.io/zaproxy/zaproxy:stable
   allow_failure: true
   script:
-    - mkdir /zap/wrk
-    - echo "Execute the baseline scan..."
-    - /zap/zap-baseline.py -t https://128.251.24.109:8443/ -g gen.conf -r testreport.html
-  after_script:
-    - echo "Copy report file to the artifact path..."
-    - cp /zap/wrk/testreport.html .
+    - zap-full-scan.py -t https://128.251.24.109:8443/ -g gen.conf -r zapreport.html
   artifacts:
     when: always
     paths:
-      - testreport.html
+      - zapreport.html
