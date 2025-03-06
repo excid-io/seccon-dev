@@ -154,10 +154,11 @@ zap:
   image: 
     name: ghcr.io/zaproxy/zaproxy:stable
   allow_failure: true
+  before_script:
+    - mkdir /zap/wrk
   script:
-    - pwd
-    - ls -la 
-    - zap-full-scan.py -t https://128.251.24.109:8443/ -g gen.conf -r zapreport.html
+    - /zap/zap-full-scan.py -t https://128.251.24.109:8443/ -g gen.conf -r zapreport.html -I
+    - cp /zap/wrk/zapreport.xml zapreport.html
   artifacts:
     when: always
     paths:
