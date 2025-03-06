@@ -161,6 +161,10 @@ trivy_sbom:
     - docker pull "$CI_REGISTRY_IMAGE:latest"
     - trivy image "$CI_REGISTRY_IMAGE:latest" --format spdx-json --output img.sbom.json    
   allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - img.sbom.json
  
 ################## attestation ##################
 
@@ -173,7 +177,7 @@ staas-provenance:
   script:
     - |
       export IMG_HASH_B64=$(cat img.hash | base64)
-      jq --arg IMG_HASH_B64 "$IMG_HASH_B64" '.subject = [{"name":$CI_REGISTRY_IMAGE, "digest":{"sha256":$IMG_HASH_B64}}]' hash_provenance > image.prov.json
+      jq --arg --arg IMG_HASH_B64 "$IMG_HASH_B64" '.subject = [{"name":$CI_REGISTRY_IMAGE, "digest":{"sha256":$IMG_HASH_B64}}]' hash_provenance > image.prov.json
     - export COMMENT=provenance
     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   allow_failure: true
