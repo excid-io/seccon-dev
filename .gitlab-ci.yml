@@ -114,7 +114,7 @@ stages:
 
 syft_sbom:
   stage: scan_image
-  needs: ["docker-build"]
+  # needs: ["docker-build"]
   image:
     name: registry.gitlab.com/gitlab-ci-utils/container-images/syft:latest
     entrypoint: [""]
