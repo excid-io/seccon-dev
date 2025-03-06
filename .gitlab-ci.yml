@@ -162,4 +162,4 @@ zap:
   artifacts:
     when: always
     paths:
-      - /zap/zapreport.html
+      - /zapreport.html
