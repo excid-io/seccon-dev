@@ -82,7 +82,7 @@ retire:
 
 docker-build:
   stage: build_image
-  # needs: ["retire"]
+  needs: ["retire"]
   image: docker:latest
   services:
     - name: docker:dind
@@ -139,7 +139,7 @@ scan_image_trivy:
  
 deploy:
   stage: deploy
-  # needs: ["scan_image_trivy", "syft_sbom"]
+  needs: ["scan_image_trivy", "syft_sbom"]
   before_script:
     - echo "deb http://gr.archive.ubuntu.com/ubuntu ubnt main" >> /etc/apt/sources.list
     - apt-get update && apt-get install openssh
@@ -150,7 +150,7 @@ deploy:
 
 zap:
   stage: dast_zap
-  # needs: ["deploy"]
+  needs: ["deploy"]
   image: 
     name: ghcr.io/zaproxy/zaproxy:stable
   allow_failure: true
