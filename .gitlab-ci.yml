@@ -130,9 +130,6 @@ syft_sbom:
     when: always
     paths:
       - image.sbom.att.json
-    reports:
-      cyclonedx:
-        - image.sbom.att.json
   allow_failure: true
 
 # scan_image_trivy:
