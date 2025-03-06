@@ -119,7 +119,7 @@ syft_sbom:
     name: registry.gitlab.com/gitlab-ci-utils/container-images/syft:latest
     entrypoint: [""]
   before_script:
-    - apk update && apk add cosign
+    - apk update && apk add cosign && apk add jq
   script:
     # - /syft/syft $CI_REGISTRY_IMAGE:latest -o cyclonedx-json=syft.cdx.json
     - syft attest $CI_REGISTRY_IMAGE:latest -o cyclonedx-json
