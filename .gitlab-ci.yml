@@ -174,16 +174,14 @@ staas-provenance:
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
+    - pip install requests
   script:
-    - pwd
-    - ls -la 
     - |
       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
     - export COMMENT=provenance
     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   after_script:
-    - curl https://staas.excid.io/Sign/Certificate
     - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle image.prov.json
 
   allow_failure: true
@@ -198,8 +196,6 @@ staas-sbom:
     - chmod +x cosign
     - pip install requests
   script:
-    - pwd
-    - ls -la 
     - export COMMENT=sbom
     - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
   after_script:
