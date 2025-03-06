@@ -185,13 +185,16 @@ staas-sbom:
   script:
     - export COMMENT=sbom
     - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
+  after_script:
+    - cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle YOUR_FILE
+
   allow_failure: true
   
 ################## deploy ##################
 
 deploy:
   stage: deploy
-  needs: ["scan_image_trivy", "syft_sbom"]
+  needs: ["staas-sbom", "staas-provenance"]
   before_script:
     - echo "deb http://gr.archive.ubuntu.com/ubuntu ubnt main" >> /etc/apt/sources.list
     - apt-get update && apt-get install openssh
