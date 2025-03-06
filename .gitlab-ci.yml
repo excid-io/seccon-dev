@@ -189,6 +189,7 @@ staas-sbom:
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
+    - pip install requests
   script:
     - pwd
     - ls -la 
