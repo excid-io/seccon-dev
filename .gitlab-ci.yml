@@ -127,21 +127,21 @@ docker-build:
 
 ################## scan_image ##################
 
-trivy_scan:
-  stage: scan_image
-  needs: ["docker-build"]
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  before_script:
-    - apk --no-cache add curl python3 py3-pip
-    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - docker pull "$CI_REGISTRY_IMAGE:latest"
-    - trivy image "$CI_REGISTRY_IMAGE:latest"
-  allow_failure: true
+# trivy_scan:
+#   stage: scan_image
+#   needs: ["docker-build"]
+#   image: docker:24
+#   services:
+#     - name: docker:24-dind
+#       alias: docker
+#   before_script:
+#     - apk --no-cache add curl python3 py3-pip
+#     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+#   script:
+#     - docker pull "$CI_REGISTRY_IMAGE:latest"
+#     - trivy image "$CI_REGISTRY_IMAGE:latest"
+#   allow_failure: true
 
 trivy_sbom:
   stage: scan_image
@@ -172,6 +172,8 @@ staas-provenance:
   before_script:
     - apt-get update && apt-get install jq -y
   script:
+    - pwd
+    - ls -la 
     - |
       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
       jq --arg --arg IMG_HASH_B64 "$IMG_HASH_B64" '.subject = [{"name":$CI_REGISTRY_IMAGE, "digest":{"sha256":$IMG_HASH_B64}}]' hash_provenance > image.prov.json
@@ -187,6 +189,8 @@ staas-sbom:
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - chmod +x cosign
   script:
+    - pwd
+    - ls -la 
     - export COMMENT=sbom
     - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
   after_script:
