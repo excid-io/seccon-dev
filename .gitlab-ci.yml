@@ -171,6 +171,9 @@ staas-provenance:
   image: python:3.9
   before_script:
     - apt-get update && apt-get install jq -y
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - mv cosign-linux-amd64 cosign
+    - chmod +x cosign
   script:
     - pwd
     - ls -la 
