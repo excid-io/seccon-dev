@@ -114,9 +114,6 @@ docker-build:
         docker push "$CI_REGISTRY_IMAGE:latest"
       fi
   after_script:
-    # - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    # - chmod +x cosign
-    # - cosign sign $DOCKER_IMAGE_NAME -y
     - docker inspect --format '{{.Id}}' "$DOCKER_IMAGE_NAME" | sed 's/^sha256://' > img.hash
   artifacts:
     when: always
@@ -176,7 +173,7 @@ staas-provenance:
     - apt-get update && apt-get install jq -y
   script:
     - |
-      export IMG_HASH_B64=$(cat img.hash | base64)
+      export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
       jq --arg --arg IMG_HASH_B64 "$IMG_HASH_B64" '.subject = [{"name":$CI_REGISTRY_IMAGE, "digest":{"sha256":$IMG_HASH_B64}}]' hash_provenance > image.prov.json
     - export COMMENT=provenance
     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
