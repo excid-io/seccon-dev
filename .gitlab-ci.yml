@@ -156,6 +156,8 @@ zap:
     entrypoint: ["/zap"]
   allow_failure: true
   script:
+    - pwd
+    - ls -la 
     - zap-full-scan.py -t https://128.251.24.109:8443/ -g gen.conf -r zapreport.html
   artifacts:
     when: always
