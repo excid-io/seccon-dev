@@ -122,7 +122,7 @@ syft_sbom:
     - apk update && apk add cosign && apk add jq
   script:
     # - /syft/syft $CI_REGISTRY_IMAGE:latest -o cyclonedx-json=syft.cdx.json
-    - syft attest $CI_REGISTRY_IMAGE:latest -o cyclonedx-json
+    - /syft/syft attest $CI_REGISTRY_IMAGE:latest -o cyclonedx-json
   after_script:
     - cosign download attestation $CI_REGISTRY_IMAGE:latest | jq . > image.sbom.att.json
     - cosign verify-attestation $CI_REGISTRY_IMAGE:latest
