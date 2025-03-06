@@ -165,7 +165,7 @@ trivy_sbom:
 ################## attestation ##################
 
 staas-provenance:
-  stage: ["attestation"]
+  stage: attestation
   needs: ["docker-build"]
   before_script:
     - apt-get update && apt-get install jq
@@ -179,7 +179,7 @@ staas-provenance:
   allow_failure: true
 
 staas-sbom:
-  stage: ["attestation"]
+  stage: attestation
   needs: ["scan_image_trivy"]
   script:
     - |
