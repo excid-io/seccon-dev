@@ -29,3 +29,18 @@ We briefly describe each step:
     - The second job is to attest the SBOM
 7. Deploy: we deploy the container built to a machine using ssh and a simple docker run command
 8. DAST: ZAP is used to for dynamic testing post-deployment
+
+## Attestations and STaaS
+
+With artifact attestations we can ensure the integrity of our artifacts by creating the some called *attestation*. This is a **signed** document (signed using [Sigstore](https://www.sigstore.dev/)) which includes attributes for the subject(s) being signed. This is very good practice especially in CI/CD pipeline where signing **and verification** can be done automatically.
+
+GitLab [supports](https://about.gitlab.com/blog/2022/08/10/securing-the-software-supply-chain-through-automated-attestation/) artifact **provenance** by setting the variable `RUNNER_GENERATE_ARTIFACTS_METADATA: "true"` in the pipeline (or in a specific job). By setting this variableto true, all declared artifacts in a job will have their provenance generated. See [here]() for a sample GitLab provenance.
+
+The purpose here is to generate the provenance and SBOM attestation of a container image. 
+
+- For the provenance: this means, how the image was built, what was its build system (i.e., the GitLab runner), what was the commit id, what was the job id, what were the values for some etc. 
+- For the SBOM: this means that the SBOM is tied to the corresponding container image
+
+In order to create the attestation for this provenance we use STaaS, a Software Transparency service. Using the script `staas-upload.py` we send one digest for the provenance file and one for the SBOM to STaaS, and for each one of them it signs the digest digest.
+
+![alt text](assets/diagram.png)
