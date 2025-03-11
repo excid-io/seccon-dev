@@ -32,9 +32,11 @@ We briefly describe each step:
 
 ## Attestations and STaaS
 
-With artifact attestations we can ensure the integrity of our artifacts by creating the some called *attestation*. This is a **signed** document (signed using [Sigstore](https://www.sigstore.dev/)) which includes attributes for the subject(s) being signed. This is very good practice especially in CI/CD pipeline where signing **and verification** can be done automatically.
+With artifact attestations we can ensure the integrity of our artifacts by creating the so called *attestation*. This is a **signed** document (signed using [Sigstore](https://www.sigstore.dev/)) which includes attributes for the subject(s) being signed. This is very good practice especially in CI/CD pipeline where signing **and verification** can be done automatically. 
 
-GitLab [supports](https://about.gitlab.com/blog/2022/08/10/securing-the-software-supply-chain-through-automated-attestation/) artifact **provenance** by setting the variable `RUNNER_GENERATE_ARTIFACTS_METADATA: "true"` in the pipeline (or in a specific job). By setting this variableto true, all declared artifacts in a job will have their provenance generated. See [here]() for a sample GitLab provenance.
+When verifying, we can also set some expectations. For example, is the version stored in the attestation the one I built?, or is the repository url stored in the attestation the real one? In more complicated scenarios, we can have a policy engine (like OPA) which contains our own policy, we feed in the attestation, and based on the policy it outputs true/false, or trust/no trust.
+
+GitLab [supports](https://about.gitlab.com/blog/2022/08/10/securing-the-software-supply-chain-through-automated-attestation/) artifact **provenance** by setting the variable `RUNNER_GENERATE_ARTIFACTS_METADATA: "true"` in the pipeline (or in a specific job). By setting this variable, all declared artifacts in a job will have their provenance generated. See [here](https://docs.gitlab.com/ci/yaml/signing_examples/#inspecting-the-provenance-metadata) for a sample GitLab provenance.
 
 The purpose here is to generate the provenance and SBOM attestation of a container image. 
 
