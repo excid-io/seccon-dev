@@ -183,8 +183,11 @@ staas-provenance:
     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   after_script:
     - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle image.prov.json
-
   allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - image.prov.json
 
 staas-sbom:
   stage: attestations
@@ -201,6 +204,10 @@ staas-sbom:
   after_script:
     - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle img.sbom.json
   allow_failure: true
+  # artifacts:
+  #   when: always
+  #   paths:
+  #     - image.prov.json
   
 ################## deploy ##################
 
