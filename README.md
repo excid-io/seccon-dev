@@ -46,3 +46,17 @@ The purpose here is to generate the provenance and SBOM attestation of a contain
 In order to create the attestation for this provenance we use STaaS, a Software Transparency service. Using the script `staas-upload.py` we send one digest for the provenance file and one for the SBOM to STaaS, and for each one of them it signs the digest digest.
 
 ![alt text](assets/diagram.png)
+
+
+## Project Components
+
+Here we outline what components we used for running this PoC.
+
+1. **GitLab**
+    - We use GitLab to upload our code and version control it online.
+2. **GitLab CI**
+    - We use GitLab CI to run our DevPrivSecOps pipelines. We use the GitLab hosted runners (we do not install our own) to execute the pipeline.
+3. **STaaS**
+    - We use STaaS to sign our documents.
+4. **Azure**
+    - We use Azure to host two VMs. One VM for the Sonarqube server required by the pipeline, and one VM to run the application.
