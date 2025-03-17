@@ -196,7 +196,7 @@ staas-provenance:
     - jq --arg sig "$SIGN_RESPONSE" '.signatures = [$sig]' image.prov.json > signed-image.prov.json
     #- python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle image.prov.json
+    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle signed-image.prov.json
   allow_failure: true
   artifacts:
     when: always
