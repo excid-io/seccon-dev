@@ -178,7 +178,18 @@ staas-provenance:
   script:
     - |
       export IMG_HASH_B64=$(cat img.hash)
-      jq --arg imghash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$imghash}}]' artifacts-metadata.json > image.prov.json
+      jq --arg imghash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" \
+         '.predicateType = "https://slsa.dev/provenance/v1" |
+          .subject = [{"name":$imgname, "digest":{"sha256":$imghash}}]' \
+          artifacts-metadata.json > unsigned-provenance.json
+      cat <<EOF > image.prov.json
+      {
+        "payload": "$(base64 -w 0 < unsigned-provenance.json)",
+        "payloadType": "application/vnd.in-toto+json",
+        "signatures": []
+      }
+      EOF 
+    #  jq --arg imghash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$imghash}}]' artifacts-metadata.json > image.prov.json
     - export COMMENT=provenance
     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   after_script:
