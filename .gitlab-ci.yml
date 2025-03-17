@@ -234,8 +234,8 @@ deploy:
     - apt-get update && apt-get install openssh
     - apt-get install sshpass
   script:
-    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@128.251.24.109 docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@128.251.24.109 docker run -it -d --rm -p 8080:8080 -p 8443:8443 "$CI_REGISTRY_IMAGE:latest" 
+    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@20.229.20.120 docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@20.229.20.120 docker run -it -d --rm -p 8080:8080 -p 8443:8443 "$CI_REGISTRY_IMAGE:latest" 
 
 ################## dast_zap ##################
 
