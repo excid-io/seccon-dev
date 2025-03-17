@@ -201,7 +201,7 @@ staas-provenance:
   artifacts:
     when: always
     paths:
-      - image.prov.json
+      - signed-image.prov.json
 
 staas-sbom:
   stage: attestations
