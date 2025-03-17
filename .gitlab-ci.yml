@@ -182,6 +182,7 @@ staas-provenance:
          '.predicateType = "https://slsa.dev/provenance/v1" |
           .subject = [{"name":$imgname, "digest":{"sha256":$imghash}}]' \
           artifacts-metadata.json > unsigned-provenance.json
+          
       cat <<EOF > image.prov.json
       {
         "payload": "$(base64 -w 0 < unsigned-provenance.json)",
@@ -193,7 +194,7 @@ staas-provenance:
     - export COMMENT=provenance
     - SIGN_RESPONSE=$(python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT)
     - SIGNATURE=$(echo "$SIGN_RESPONSE" | jq -r '.signature')
-    - jq --arg sig "$SIGNATURE" '.signatures = [{"sig": $sig}]' image.prov.json > signed-image.prov.json
+    - jq --arg sig "$SIGNATURE" '.signatures = [$sig]' image.prov.json > signed-image.prov.json
     #- python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   after_script:
     - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle image.prov.json
