@@ -191,7 +191,10 @@ staas-provenance:
       EOF 
     ##  jq --arg imghash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$imghash}}]' artifacts-metadata.json > image.prov.json
     - export COMMENT=provenance
-    - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
+    - SIGN_RESPONSE=$(python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT)
+    - SIGNATURE=$(echo "$SIGN_RESPONSE" | jq -r '.signature')
+    - jq --arg sig "$SIGNATURE" '.signatures = [{"sig": $sig}]' image.prov.json > signed-image.prov.json
+    #- python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   after_script:
     - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle image.prov.json
   allow_failure: true
