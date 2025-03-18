@@ -186,7 +186,7 @@ staas-provenance:
   artifacts:
     when: always
     paths:
-      - img.prov.json.bundle
+      - image.prov.json.bundle
 
 staas-sbom:
   stage: attestations
