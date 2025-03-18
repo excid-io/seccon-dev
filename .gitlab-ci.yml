@@ -106,15 +106,13 @@ docker-build:
     - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | sh
     - mkdir security
     - mv FAIRDICE.crt FAIRDICE.key security
-    - docker build -t "$DOCKER_IMAGE_NAME" .
+    - docker build --iidfile img.hash -t "$DOCKER_IMAGE_NAME" .
     - docker push "$DOCKER_IMAGE_NAME"
     - |
       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
         docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
         docker push "$CI_REGISTRY_IMAGE:latest"
-      fi
-  after_script:
-    - docker inspect --format '{{.Id}}' "$DOCKER_IMAGE_NAME" | sed 's/^sha256://' > img.hash
+      fi 
   artifacts:
     when: always
     paths:
@@ -177,31 +175,17 @@ staas-provenance:
     - pip install requests
   script:
     - |
-      export IMG_HASH_B64=$(cat img.hash)
-      jq --arg imghash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" \
-         '.predicateType = "https://slsa.dev/provenance/v1" |
-          .subject = [{"name":$imgname, "digest":{"sha256":$imghash}}]' \
-          artifacts-metadata.json > unsigned-provenance.json
-          
-      cat <<EOF > image.prov.json
-      {
-        "payload": "$(base64 -w 0 < unsigned-provenance.json)",
-        "payloadType": "application/vnd.in-toto+json",
-        "signatures": []
-      }
-      EOF 
-    ##  jq --arg imghash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$imghash}}]' artifacts-metadata.json > image.prov.json
+      export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
+      jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
     - export COMMENT=provenance
-    - SIGN_RESPONSE=$(python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT)
-    - jq --arg sig "$SIGN_RESPONSE" '.signatures = [$sig]' image.prov.json > signed-image.prov.json
-    #- python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
+    - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle signed-image.prov.json
+    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
   allow_failure: true
   artifacts:
     when: always
     paths:
-      - signed-image.prov.json
+      - img.prov.json.bundle
 
 staas-sbom:
   stage: attestations
@@ -216,12 +200,12 @@ staas-sbom:
     - export COMMENT=sbom
     - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
   after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle signature.bundle img.sbom.json
+    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle img.sbom.json.bundle img.sbom.json
   allow_failure: true
-  # artifacts:
-  #   when: always
-  #   paths:
-  #     - image.prov.json
+  artifacts:
+    when: always
+    paths:
+      - img.sbom.json.bundle
   
 ################## deploy ##################
 
@@ -233,8 +217,8 @@ deploy:
     - apt-get update && apt-get install openssh
     - apt-get install sshpass
   script:
-    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@20.229.20.120 docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@20.229.20.120 docker run -it -d --rm -p 8080:8080 -p 8443:8443 "$CI_REGISTRY_IMAGE:latest" 
+    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@128.251.24.109 docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@128.251.24.109 docker run -it -d --rm -p 8080:8080 -p 8443:8443 "$CI_REGISTRY_IMAGE:latest" 
 
 ################## dast_zap ##################
 

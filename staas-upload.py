@@ -26,4 +26,7 @@ payload = f"""
 print(payload)
 response = requests.request("POST", url + "Api/Sign", headers=headers, data=payload)
 print(response.text)
+with open(FILENAME+".bundle", "w") as text_file:
+    text_file.write(response.text)
+
 print(response.status_code)
