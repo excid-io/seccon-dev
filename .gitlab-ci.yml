@@ -91,7 +91,7 @@ stages:
 
 docker-build:
   stage: build_image
-  needs: ["retire"]
+  # needs: ["retire"]
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
