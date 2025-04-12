@@ -1,3 +1,5 @@
+### This is the vulnerable pipeline
+
 stages:
   - build_image
   - scan_image
@@ -22,6 +24,7 @@ docker-build:
     - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | sh
     - mkdir security
     - mv FAIRDICE.crt FAIRDICE.key security
+    - DOCKER_IMAGE_NAME=https://gitlab.com/excid-demo/excid-civd-demo-project  # HERE is the vulnerability
     - docker build --iidfile img.hash -t "$DOCKER_IMAGE_NAME" .
     - docker push "$DOCKER_IMAGE_NAME"
     - |
@@ -38,44 +41,6 @@ docker-build:
     - if: $CI_COMMIT_BRANCH
       exists:
         - Dockerfile
-
-################## scan_image ##################
-
-trivy_scan:
-  stage: scan_image
-  needs: ["docker-build"]
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  before_script:
-    - apk --no-cache add curl python3 py3-pip
-    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - docker pull "$CI_REGISTRY_IMAGE:latest"
-    - trivy image "$CI_REGISTRY_IMAGE:latest"
-  allow_failure: true
-
-trivy_sbom:
-  stage: scan_image
-  needs: ["docker-build"]
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  before_script:
-    - apk --no-cache add curl python3 py3-pip
-    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - docker pull "$CI_REGISTRY_IMAGE:latest"
-    - trivy image "$CI_REGISTRY_IMAGE:latest" --format spdx-json --output img.sbom.json    
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - img.sbom.json
  
 ################## attestation ##################
 
