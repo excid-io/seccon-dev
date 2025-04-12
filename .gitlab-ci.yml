@@ -70,8 +70,8 @@ staas-provenance:
 
 staas-sbom:
   stage: attestations
-  needs: ["trivy_sbom"]
   image: python:3.9
+  needs: ["docker-build"]
   before_script:
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
