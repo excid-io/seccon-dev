@@ -60,3 +60,22 @@ Here we outline what components we used for running this PoC.
     - We use STaaS to sign our documents.
 4. **Azure**
     - We use Azure to host two VMs. One VM for the Sonarqube server required by the pipeline, and one VM to run the application.
+
+
+
+## Attack scenarios
+
+In this repo we also consider how attestations protect from specific attack scenarios. This is why we showcase two different yaml files:
+- one for normal operating conditions (devprivsecops.gitlab-ci.yml)
+- one which is vulnerable (.gitlab-ci.yml)
+
+The purpose is to show how a vulnerable `.gitlab-ci.yml` file can be exploited by an adversary. By doing this, we emphasize the importance of the verification of attestations. 
+
+For example, if our repo's name is `excid-cicd-demo-project`, the attacker can create another repo which is typosquatted, like `excid-civd-demo-project`, and upload a pipeline whici executes `docker build excid-civd-demo-project`, and thus, builds and pushes a malicious copy of our project.
+
+Attacks covered in this repo are related to the threats mentioned in the [SLSA specification](https://slsa.dev/spec/v1.0/threats-overview), plus some dependency attacks just to showcase how the SBOM attestation can protect from vulnerable dependencies, typosquatted dependencies etc.
+
+Scenarios:
+1. Build from malicious source (threat C in SLSA)
+
+
