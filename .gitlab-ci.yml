@@ -25,12 +25,13 @@ docker-build:
     - mkdir security
     - mv FAIRDICE.crt FAIRDICE.key security
     - DOCKER_IMAGE_NAME=https://gitlab.com/excid-demo/excid-civd-demo-project  # HERE is the vulnerability
+    - apk add git && git clone $DOCKER_IMAGE_NAME .
     - docker build --iidfile img.hash -t "$DOCKER_IMAGE_NAME" .
     - docker push "$DOCKER_IMAGE_NAME"
     - |
       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
         docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
-        docker push "$CI_REGISTRY_IMAGE:latest"
+        docker push "$DOCKER_IMAGE_NAME:latest"
       fi 
   artifacts:
     when: always
