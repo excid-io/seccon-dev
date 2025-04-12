@@ -13,7 +13,8 @@ docker-build:
   services:
     - docker:24.0.5-dind
   variables:
-    DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    DOCKER_IMAGE_NAME: https://gitlab.com/excid-demo/excid-civd-demo-project:$CI_COMMIT_REF_SLUG
+    DOCKERFILE: excid-civd-demo-project/Dockerfile
     SECURE_FILES_DOWNLOAD_PATH: './'
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
     DOCKER_TLS_CERTDIR: "/certs"
@@ -24,15 +25,14 @@ docker-build:
     - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | sh
     - mkdir security
     - mv FAIRDICE.crt FAIRDICE.key security
-    - DOCKER_IMAGE_NAME=https://gitlab.com/excid-demo/excid-civd-demo-project  # HERE is the vulnerability
-    - apk add git && git clone $DOCKER_IMAGE_NAME .
-    - docker build --iidfile img.hash -t "$DOCKER_IMAGE_NAME" .
-    - docker push "$DOCKER_IMAGE_NAME"
-    - |
-      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-        docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
-        docker push "$DOCKER_IMAGE_NAME:latest"
-      fi 
+    - apk add git && git clone $DOCKER_IMAGE_NAME  -q
+    - docker build --iidfile img.hash -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG $DOCKERFILE
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+    # - |
+    #   if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+    #     docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
+    #     docker push "$DOCKER_IMAGE_NAME:latest"
+    #   fi 
   artifacts:
     when: always
     paths:
