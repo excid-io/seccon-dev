@@ -58,8 +58,7 @@ Here we outline what components we used for running this PoC.
     - We use GitLab CI to run our DevPrivSecOps pipelines. We use the GitLab hosted runners (we do not install our own) to execute the pipeline.
 3. **STaaS**
     - We use STaaS to sign our documents.
-4. **Azure**
-    - We use Azure to host two VMs. One VM for the Sonarqube server required by the pipeline, and one VM to run the application.
 
+## Attack scenarios
 
-
+In this repo we present some attack scenarios. See `README.ATTACKS.md` for more.
