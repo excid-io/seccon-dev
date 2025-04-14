@@ -63,26 +63,3 @@ Here we outline what components we used for running this PoC.
 
 
 
-## Attack scenarios & Mitigations using Open Policy Agent
-
-In this repo we also consider how attestations protect from specific attack scenarios. This is why we showcase two different yaml files:
-- one for normal operating conditions (devprivsecops.gitlab-ci.yml)
-- one which is vulnerable (.gitlab-ci.yml)
-
-*Note*: GitLab CI can only have **one** `.gitlab-ci.yml` file in the repo which runs the pipeline, so rename the file you want to run accordingly.
-
-The purpose is to show how a vulnerable `.gitlab-ci.yml` file can be exploited by an adversary. By doing this, we emphasize the importance of the verification of attestations. We use `Open Policy Agent (OPA) and write policies in REGO to verify the attestations.
-
-For example, if our repo's name is `excid-cicd-demo-project`, the attacker can create another repo which is typosquatted, like `excid-civd-demo-project`, and upload a pipeline whici executes `docker build excid-civd-demo-project`, and thus, builds and pushes a malicious copy of our project.
-
-Attacks covered in this repo are related to the threats mentioned in the [SLSA specification](https://slsa.dev/spec/v1.0/threats-overview), plus some dependency attacks just to showcase how the SBOM attestation can protect from vulnerable dependencies, typosquatted dependencies etc.
-
-Scenarios:
-| Scenario                                       | Description                                                                                                                                                                               | Remediation                                                                                                        |
-|------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| Build from malicious source (threat C in SLSA) | For this scenario, we have a typosquatted version of the project as mentioned above, which just disables the https server (only serves http) and output a message "Malicious" in the HTML | In the verification policy, we need to explicitly check if the repo in the predicate is equal to the official repo |
-|                                          |                                                                                                                                                                                         |                                                                                                                    |
-|                                         |                                                                                                                                                                                   |                                                                                                                    |
-
-
-
