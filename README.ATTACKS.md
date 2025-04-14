@@ -30,3 +30,50 @@ Other possible scenarios (out of scope):
 
 Build from malicious source (different repository than the intended). In this scenario, we consider that someone created a repoository with a different name than the official one, and modifies the CI pipeline so that it builds the code from the malicious repository.
 
+![alt text](assets/attack1_mal_repo.png)
+
+Now, because SLSA defines that the **build platform is trusted**, we consider the attestation produced as an **honest** document. 
+<ins>Remember</ins>, attestations are signed documents, which means that if someone tampered with it (e.g., change `subject` field in the attestation) this will be visible.
+
+Next, imagine the CD process which runs after the CI. These are two independent procedures. Within the CD, we use tools like `cosign` to verify the authenticity and integrity of the attestation. After this, we use `opa` to verify fields of the attestation against our own expectations.
+
+What we can do with OPA is load it with our own custom data:
+
+![alt text](assets/attack1_mal_repo_opa.png)
+
+When verifying, we can run some checks like the following: 
+
+![alt text](assets/attack1_mal_repo_opa2.png)
+
+If the check above succeeds, then the repo is the original one. Otherwise, we fail the CD and do not deploy the container image.
+
+### Scenario 2
+
+Contrary to the previous one, now the attackers builds the same project - the official one - but from a previous version which is known to have vulnerabilities.
+
+![alt text](assets/attack2_old_version.png)
+
+OPA will pull the attestation and check against the commit hash. <ins>*Note*</ins> that OPA has the [capability](https://www.openpolicyagent.org/docs/latest/policy-reference/#http) to make HTTP requests to external services and ask for data.
+
+![alt text](assets/attack1_mal_repo_opa2.png)
+
+### Scenario 3
+
+Another threat is building from an unknown build system. If an adversary writes a malicious GitLab runner, run it within the infrastructure and register it in the repository, then this runner can take on jobs submitted by legit users and act illegally.
+
+Why is there a need to worry for that? Don't we trust the build platform? Yes, but, it has been [reported](https://frichetten.com/blog/abusing-gitlab-runners/) for GitLab runners that there is a race condition vulnerability where malicious runners can request to run submitted pipelines before legit ones. Obviously, this runner can then run whatever pipeline it wants, and upload a malicious container image.
+
+Having that in mind, we can verify two things:
+1. verify all binaries pre-installation (out of scope for artifact attestations)
+2. verifying that the GitLab runner token is indeed created by a trusted entity, and OPA knows about this token
+
+
+### Scenario 4
+
+Another way attestations can protect from attacks, is by creating the SBOM attestation. This way, we have an authenticated document stating that some dependencies exist in our codebase.
+
+If some dependency is known to be vulnerable or malicious, we can capture it in the SBOM and drop CD.
+
+![alt text](assets/attack4_sbom.png)
+
+We can load a CVE database into OPA and check the SBOM against this knowledge base.

@@ -1,0 +1,52 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" version="26.2.12">
+  <diagram name="Page-1" id="jbCUf9WCYeqIHVk9oekw">
+    <mxGraphModel dx="985" dy="479" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="0M90SnPcE-xYYPnohlLW-2" value="" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="0M90SnPcE-xYYPnohlLW-12">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="365" y="264.66" as="sourcePoint" />
+            <mxPoint x="425" y="264.66" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="390" y="265" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-3" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;1. changes&lt;div&gt;commited&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="290" y="245" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-22" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0M90SnPcE-xYYPnohlLW-12" target="0M90SnPcE-xYYPnohlLW-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-12" value="" style="sketch=0;aspect=fixed;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;fillColor=#00188D;shape=mxgraph.mscae.enterprise.code_file" vertex="1" parent="1">
+          <mxGeometry x="425" y="240" width="49" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0M90SnPcE-xYYPnohlLW-14" target="0M90SnPcE-xYYPnohlLW-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-14" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Npm-logo.svg/1920px-Npm-logo.svg.png;" vertex="1" parent="1">
+          <mxGeometry x="414.5" y="160.00000000000003" width="70" height="27.24" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-17" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;2. malicious&lt;div&gt;dependency&lt;/div&gt;&lt;div&gt;imported&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="450" y="187.24" width="90" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-20" value="" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/Virtual_Machine.svg;" vertex="1" parent="1">
+          <mxGeometry x="590" y="242" width="50" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-23" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;3. deployment&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="475" y="267" width="100" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-30" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0M90SnPcE-xYYPnohlLW-25" target="0M90SnPcE-xYYPnohlLW-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-25" value="" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="605" y="147.24" width="20" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-31" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;4. malicious&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;line-height: 100%;&quot;&gt;dependency&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;line-height: 100%;&quot;&gt;acts illicitly&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="625" y="187.24" width="90" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

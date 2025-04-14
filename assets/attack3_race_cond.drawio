@@ -1,0 +1,52 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" version="26.2.12">
+  <diagram name="Page-1" id="jbCUf9WCYeqIHVk9oekw">
+    <mxGraphModel dx="985" dy="479" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="0M90SnPcE-xYYPnohlLW-1" value="VCS" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.git_repository;" vertex="1" parent="1">
+          <mxGeometry x="425" y="240" width="50" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-2" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="365" y="264.66" as="sourcePoint" />
+            <mxPoint x="425" y="264.66" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-3" value="&lt;div style=&quot;line-height: 100%;&quot;&gt;changes&lt;div&gt;commited&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="290" y="245" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0M90SnPcE-xYYPnohlLW-4" target="0M90SnPcE-xYYPnohlLW-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="527" y="220" />
+              <mxPoint x="527" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-7" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;polls every 3 sec&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="0M90SnPcE-xYYPnohlLW-6">
+          <mxGeometry x="-0.4642" y="2" relative="1" as="geometry">
+            <mxPoint x="-10" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-4" value="Official" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://images.ctfassets.net/xz1dnu24egyd/1IRkfXmxo8VP2RAE5jiS1Q/ea2086675d87911b0ce2d34c354b3711/gitlab-logo-500.png;" vertex="1" parent="1">
+          <mxGeometry x="580" y="190" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="0M90SnPcE-xYYPnohlLW-5" target="0M90SnPcE-xYYPnohlLW-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="527" y="313" />
+              <mxPoint x="527" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-5" value="Malicious" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://images.ctfassets.net/xz1dnu24egyd/6P0YId0C3ofFPyO0FaBhxl/4cd062515399f22779171cf661097319/gitlab-logo-600.png;" vertex="1" parent="1">
+          <mxGeometry x="580" y="285" width="55" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="0M90SnPcE-xYYPnohlLW-9" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;polls every 0.5 sec&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="1">
+          <mxGeometry x="530" y="330.0044827586207" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
