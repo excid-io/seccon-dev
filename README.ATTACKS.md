@@ -20,7 +20,8 @@ Scenarios:
 | Build from previous commit hash                  | Instead of building from the current commit, the pipeline builds from a previous version which is vulnerable.                                                          | Always check that the package/container image built, corresponds to the latest commit hash                                  |
 | Build from non-registered/malicious runner       | Build with a runner that is not registered in my infrastructure (mostly for cases including self-hosted runners)                                                       | Give OPA some data input, which is a list of registered runners (their tokens)                                              |
 | Build with compromised dependency                | Import a malicious dependency                                                                                                                                          | Generate SBOM attestation, and check against names and versions of dependencies that are highly significant for the project |
-|                                                  |                                                                                                                                                                        |                                                                                                                             |
+
+
 Other possible scenarios (out of scope):
 
 - Submit unauthorized changes in source code -> two-person review
