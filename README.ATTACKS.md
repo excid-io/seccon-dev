@@ -8,7 +8,7 @@ In this repo we also consider how attestations protect from specific attack scen
 
 The purpose is to show how a vulnerable `.gitlab-ci.yml` file can be exploited by an adversary. By doing this, we emphasize the importance of the verification of attestations. We use `Open Policy Agent (OPA)` and write policies in REGO to verify the attestations. More details about `opa` and its functionality see the `policy` folder in the repo.
 
-For example, if our repo's name is `excid-cicd-demo-project`, the attacker can create another repo which is typosquatted, like `excid-civd-demo-project`, and upload a pipeline whici executes `docker build excid-civd-demo-project`, and thus, builds and pushes a malicious copy of our project.
+For example, if our repo's name is `excid-cicd-demo-project`, the attacker can create another repo which is typosquatted, like `excid-civd-demo-project`, and upload a pipeline which executes `docker build excid-civd-demo-project`, and thus, builds and pushes a malicious copy of our project.
 
 Attacks covered in this repo are related to the threats mentioned in the [SLSA specification threat list](https://slsa.dev/spec/v1.0/threats-overview), plus some dependency attacks just to showcase how the SBOM attestation can protect from vulnerable dependencies, typosquatted dependencies etc.
 
