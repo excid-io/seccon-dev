@@ -143,7 +143,7 @@ staas-sign-container-image:
     - export COMMENT=container-signature
     - python3 staas-upload.py img.hash $STAAS_API_TOKEN $COMMENT
     - jq -r '.base64Signature' ./img.hash.bundle > img.sig
-    - cosign attach signature "$CI_REGISTRY_IMAGE:latest" --signature img.sig --payload ./img.hash.bundle
+    - ./cosign attach signature "$CI_REGISTRY_IMAGE:latest" --signature img.sig --payload ./img.hash.bundle
   after_script:
     - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle img.hash.bundle img.hash
   allow_failure: true
