@@ -129,7 +129,7 @@ docker-build:
       exists:
         - Dockerfile
 
-sign-container-image:
+staas-sign-container-image:
   stage: container_signature
   needs: ["docker-build"]
   image: python:3.9
@@ -140,6 +140,7 @@ sign-container-image:
     - chmod +x cosign
     - pip install requests
   script:
+    - export COMMENT=container-signature
     - python3 staas-upload.py img.hash $STAAS_API_TOKEN $COMMENT
     - jq -r '.base64Signature' ./img.hash.bundle > img.sig
     - cosign attach signature "$CI_REGISTRY_IMAGE:latest" --signature img.sig --payload ./img.hash.bundle
