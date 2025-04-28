@@ -3,7 +3,7 @@ stages:
   # - sast
   # - sca
   - build_image
-  - sign_image
+  - container_signature
   - scan_image
   - attestations
   # - deploy
@@ -123,7 +123,6 @@ docker-build:
     when: always
     paths:
       - img.hash
-      - img.hash.bundle
   allow_failure: true
   rules:
     - if: $CI_COMMIT_BRANCH
@@ -131,7 +130,7 @@ docker-build:
         - Dockerfile
 
 sign-container-image:
-  stage: sign-image
+  stage: container_signature
   needs: ["docker-build"]
   image: python:3.9
   before_script:
