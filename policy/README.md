@@ -1,8 +1,10 @@
-## Provenance verification with Open Policy Agent (OPA)
+## Artifact attestation verification with Open Policy Agent (OPA)
 
 ### Description
 
-Here, we have a simple REGO file which runs some checks against our provenance attestation. The signature verification is **NOT** done by OPA, we assume that it was done in a previous step using `cosign` or a similar tool.
+Here, we have some simple REGO files which run some checks against our provenance and sbom attestations. In this README, we see how OPA as a **standalone** running server works with some custom input (policies+data+input) to validate our attestations. The present file has **nothing** to do with Continuous Deployment cases (although can fit in). These attestations refer to container images.
+
+The container image signature verification is **NOT** done by OPA, we assume that it was done in a previous step using `cosign` or a similar tool.
 We have two policies:
 - One for provenance
 - One for SBOM

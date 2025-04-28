@@ -114,10 +114,15 @@ docker-build:
         docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
         docker push "$CI_REGISTRY_IMAGE:latest"
       fi 
+  after_script:
+    - python3 staas-upload.py img.hash $STAAS_API_TOKEN $COMMENT
+    - jq -r '.base64Signature' ./img.hash.bundle > img.sig
+    - cosign attach signature $DOCKER_IMAGE_NAME --signature img.sig --payload ./img.hash.bundle
   artifacts:
     when: always
     paths:
       - img.hash
+      - img.hash.bundle
   allow_failure: true
   rules:
     - if: $CI_COMMIT_BRANCH
@@ -155,12 +160,12 @@ trivy_sbom:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - docker pull "$CI_REGISTRY_IMAGE:latest"
-    - trivy image "$CI_REGISTRY_IMAGE:latest" --format spdx-json --output img.sbom.json    
+    - trivy image "$CI_REGISTRY_IMAGE:latest" --format spdx-json --output image.sbom.json    
   allow_failure: true
   artifacts:
     when: always
     paths:
-      - img.sbom.json
+      - image.sbom.json
  
 ################## attestation ##################
 
@@ -199,14 +204,14 @@ staas-sbom:
     - pip install requests
   script:
     - export COMMENT=sbom
-    - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
+    - python3 staas-upload.py image.sbom.json $STAAS_API_TOKEN $COMMENT
   after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle img.sbom.json.bundle img.sbom.json
+    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.sbom.json.bundle image.sbom.json
   allow_failure: true
   artifacts:
     when: always
     paths:
-      - img.sbom.json.bundle
+      - image.sbom.json.bundle
   
 ################## deploy ##################
 
