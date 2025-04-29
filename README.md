@@ -62,3 +62,13 @@ Here we outline what components we used for running this PoC.
 ## Attack scenarios
 
 In this repo we present some attack scenarios. See `README.ATTACKS.md` for more.
+
+## Verification
+
+We have two distinct cases of verification in this repo.
+1. One under `policy` folder
+2. One under `k8s/gatekeeper` folder
+
+The first one is about using a standalone instance of OPA to verify attestations, and some Rego policies accompanying it.
+
+The second one is about using OPA Gatekeeper as a K8s component for continious deployment cases, where conitnious verification is also required.

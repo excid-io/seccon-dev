@@ -1,4 +1,4 @@
-## Continious Verification of container signatures and attestations
+## Continious Verification of container signatures and attestations w/Cosign
 
 Prerequisites: docker, docker-compose (or docker compose)
 
@@ -7,7 +7,7 @@ In this README file we see how to verify container signatures and attestations i
 2. sbom
 3. provenance
 
-![alt text](assets/cicd-aeros.drawio.png)
+![alt text](/assets/cicd-aeros.drawio.png)
 
 For the last two, we need to run an extra policy which checks some of the attestation's fields against our expectations (found in the Rego policies). What the CD tool (say FluxCD) does, is bring in containers into the cluster. What OPA sees actually is mostly information about the container image.
 

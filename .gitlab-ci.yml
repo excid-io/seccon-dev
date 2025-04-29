@@ -125,6 +125,8 @@ docker-build:
       exists:
         - Dockerfile
 
+################## container_signature ##################
+
 staas-sign-container-image:
   stage: container_signature
   needs: ["docker-build"]
