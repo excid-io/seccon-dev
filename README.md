@@ -4,7 +4,7 @@
 
 A demo pipeline for demonstrating DevPrivSecOps methodology with GitLab CI. Our focus on this repo is mainly on artifact attestations and how we use them with STaaS within a pipeline, but we build a more complete pipeline to demonstrate how these attestations could fit within any pipeline.
 
-We use a demo application which is a web game for playing with dice, written in NodeJS. It is packed into a container and deployed on a machine which contains Docker. A mysql container also needs to exist in the same machine which acts as the database for the web app container.
+We use a demo application which is a very simple web written in NodeJS with express-js. It is packed into a container and deployed on a machine which contains Docker. 
 
 This pipeline automates security checks in the software development lifecycle, integrating multiple stages of security testing. It includes Secret Scanning, SAST (Static Application Security Testing), SCA (Software Composition Analysis), Image Building and Scanning, Artifact Attestations, Deployment, and DAST (Dynamic Application Security Testing). Key tools like Gitleaks, Semgrep, Trivy, and SonarQube are used to detect vulnerabilities, misconfigurations, and secrets within the code and container images. DAST (Dynamic Application Security Testing) with ZAP scans the deployed application for vulnerabilities. This pipeline promotes a secure CI/CD process by detecting and mitigating security issues early.
 

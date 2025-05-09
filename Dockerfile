@@ -6,12 +6,10 @@ COPY package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY server.js .
 
 ENV HTTP_PORT=8080
-ENV HTTPS_PORT=8443
 
-EXPOSE 8080
-EXPOSE 8443
+EXPOSE 9090
 
 CMD [ "node", "server.js" ]
