@@ -13,14 +13,27 @@ spec:
     name: flux-system
   url: https://gitlab.com/lefosg/excid-cicd-demo-project.git
 ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: flux-system
+#   namespace: flux-system
+# spec:
+#   interval: 10m0s
+#   path: ./k8s/fluxcd
+#   prune: true
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: flux-system
+  name: base-app
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./k8s/fluxcd
+  path: ./k8s/fluxcd/base
   prune: true
   sourceRef:
     kind: GitRepository
