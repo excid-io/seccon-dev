@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m0s
-  path: ./k8s/fluxcd/base
+  path: ./k8s/fluxcd/environments/development
   prune: true
   sourceRef:
     kind: GitRepository
