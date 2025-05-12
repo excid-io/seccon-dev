@@ -2,18 +2,18 @@
 
 Prerequisites: docker, docker-compose (or docker compose)
 
-In this README file we see how to verify container signatures and attestations in a Kubernetes-native way. We suppose that the CI happens somewhere, and a service like ArgoCD or FluxCD do the Continious Deployment part for us. We need an automated way to perform verification over our produced signatures, namely:
+In this README file we see how to verify container signatures and attestations in a Kubernetes-native way. We suppose that the CI happens somewhere (maybe in a GitLab runner), and a service like ArgoCD or FluxCD do the Continious Deployment part for us. We need an automated way to perform verification over our produced signatures, namely:
 1. container signature
 2. sbom
 3. provenance
 
 ![alt text](/assets/cicd-aeros.drawio.png)
 
-For the last two, we need to run an extra policy which checks some of the attestation's fields against our expectations (found in the Rego policies). What the CD tool (say FluxCD) does, is bring in containers into the cluster. What OPA sees actually is mostly information about the container image.
+For the last two, we need to run an extra policy which checks some of the attestation's fields against our expectations (found in the Rego policies). What the CD tool does (FluxCD in our case), is bring in containers into the cluster. What OPA sees actually is mostly information about the container image.
 
 OPA Gatekeeper supports `providers` for communicating with [external services](https://open-policy-agent.github.io/gatekeeper/website/docs/externaldata/). In order to automate the signature verification during CD, we use the [cosign gatekeeper provider](https://github.com/sigstore/cosign-gatekeeper-provider). This essentially installs a namespace with a pod in our cluster which knows how to check if a given container image is signed.
 
-We create a very simple evaluation. We have a `minikube` cluster in which we add:
+We create a very simple demo. We have a `minikube` cluster in which we add:
 1. OPA Gatekeeper
 2. Cosign gatekeeper provider
 3. FluxCD
@@ -42,7 +42,7 @@ chmod 700 get_helm.sh
 ```
 
 #### OPA Gatekeeper
-[OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper) is the Kubernetes version of OPA. It replaces the default admission controller, and replaces it with a custom one which knows how to run Rego policies. It provides CRDs to write our own constraints for .yaml files applied in the cluster, that enforce policies on them.
+[OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper) is the "Kubernetes version of OPA". It replaces the default admission controller, and replaces it with a custom one which knows how to run Rego policies. It provides CRDs to write our own constraints for .yaml files applied in the cluster, that enforce policies on them.
 
 ```sh
 ### 3. Install OPA Gatekeeper in cluster
@@ -56,7 +56,7 @@ helm install gatekeeper/gatekeeper  \
 ```
 
 #### FluxCD
-[FluxCD](https://fluxcd.io/) is a Continious Deployment tool. When we make changes to container images or their corresponding .yaml files in a git repo, these changes are automatically detected by Flux, it pull the new changes and applies them to the cluster. The git repo is the source of truth. Whatever configuration exists in the git repo, it is 
+[FluxCD](https://fluxcd.io/) is a Continious Deployment tool. When we make changes to OCI container images or their corresponding .yaml files in a git repo, these changes are automatically detected by Flux. It pulls the new changes and applies them to the cluster. The git repo is the source of truth. Whatever configuration exists in the git repo, is applied in the cluster.
 
 ```sh
 ### 3. Install FluxCD in cluster
@@ -69,9 +69,17 @@ flux bootstrap gitlab \
   --owner=my-gitlab-username \
   --repository=my-project \
   --branch=main \
-  --path=path/to/monitor \
+  --path=cluster/my-cluster \
   --personal
 ```
+
+The k8s files exist under the `apps` folder. In there, there are the .yaml and kustomization file. We create a base kustomization which just applies a Deployment with one replica for the image we build in our `.gitlab-ci.yaml` pipeline. 
+Then, there are two extra kustomizations under the `environments` folder:
+- the `development` kustomization which only patches the kustomization to use 2 replicas
+- the `production` kustomization which similarly applies 6 replicas
+
+In a more complex use case, we could have many deployments under many namespaces. In the `base` folder, we only consider the `default` namespace, where our Deploymet will exist.
+ 
 
 
 #### Cosign Gatekeeper Provider
