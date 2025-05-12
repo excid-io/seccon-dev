@@ -1,8 +1,3 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: excid-cicd-demo-project
-  labels:
-    app: excid-cicd-demo-project
-spec:
-  replicas: 4
+- op: replace #action 
+  path: /spec/replicas #resouirce we want to change
+  value: 4 #value we want to use for patching 

@@ -60,13 +60,17 @@ helm install gatekeeper/gatekeeper  \
 
 ```sh
 ### 3. Install FluxCD in cluster
-helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
-helm install gatekeeper/gatekeeper  \
-    --name-template=gatekeeper \
-    --namespace gatekeeper-system --create-namespace \
-    --set enableExternalData=true \
-    --set controllerManager.dnsPolicy=ClusterFirst,audit.dnsPolicy=ClusterFirst \
-    --version 3.10.0
+export GITLAB_TOKEN=<gl-token>
+# Then install flux cli
+curl -s https://fluxcd.io/install.sh | sudo bash
+# The following command bootstraps FluxCD in a cluster which is controlled by a personal project in GitLab, not a group project (see flux documentation for more on that)
+flux bootstrap gitlab \  
+  --deploy-token-auth \
+  --owner=my-gitlab-username \
+  --repository=my-project \
+  --branch=main \
+  --path=path/to/monitor \
+  --personal
 ```
 
 

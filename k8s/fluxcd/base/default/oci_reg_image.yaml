@@ -1,0 +1,11 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: image-registry
+  namespace: default
+spec:
+  interval: 2m0s
+  url: oci://registry.gitlab.com/lefosg/excid-cicd-demo-project
+  ref:
+    tag: latest
