@@ -31,7 +31,7 @@ metadata:
   name: base-app
   namespace: default
 spec:
-  interval: 10m0s
+  interval: 0m30s
   path: ./k8s/fluxcd/base
   prune: true
   sourceRef:
