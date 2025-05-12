@@ -90,31 +90,53 @@ stages:
 
 ################## build_image ##################
 
-docker-build:
+# docker-build:
+#   stage: build_image
+#   # needs: ["retire"]
+#   image: docker:24.0.5
+#   services:
+#     - docker:24.0.5-dind
+#   variables:
+#     DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+#     SECURE_FILES_DOWNLOAD_PATH: './'
+#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+#     DOCKER_TLS_CERTDIR: "/certs"
+#   before_script:
+#     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+#     - apk update && apk add curl
+#   script:
+#     - docker build --iidfile img.hash -t "$DOCKER_IMAGE_NAME" .
+#     - docker push "$DOCKER_IMAGE_NAME"
+#     - |
+#       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+#         docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
+#         docker push "$CI_REGISTRY_IMAGE:latest"
+#       fi 
+#   artifacts:
+#     when: always
+#     paths:
+#       - img.hash
+#   allow_failure: true
+#   rules:
+#     - if: $CI_COMMIT_BRANCH
+#       exists:
+#         - Dockerfile
+
+kaniko-build:
   stage: build_image
-  # needs: ["retire"]
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
   variables:
-    DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-    SECURE_FILES_DOWNLOAD_PATH: './'
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - apk update && apk add curl
   script:
-    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | sh
-    - mkdir security
-    - mv FAIRDICE.crt FAIRDICE.key security
-    - docker build --iidfile img.hash -t "$DOCKER_IMAGE_NAME" .
-    - docker push "$DOCKER_IMAGE_NAME"
-    - |
-      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-        docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
-        docker push "$CI_REGISTRY_IMAGE:latest"
-      fi 
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:latest"
+      --image-name-with-digest-file tmp.hash
+    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
+  allow_failure: true
   artifacts:
     when: always
     paths:
@@ -125,11 +147,12 @@ docker-build:
       exists:
         - Dockerfile
 
+
 ################## container_signature ##################
 
 staas-sign-container-image:
   stage: container_signature
-  needs: ["docker-build"]
+  needs: ["kaniko-build"]
   image: python:3.9
   before_script:
     - apt-get update && apt-get install jq -y
@@ -145,7 +168,7 @@ staas-sign-container-image:
     - jq -r '.base64Signature' ./img.hash.bundle > img.sig
     - ./cosign attach signature "$CI_REGISTRY_IMAGE:latest" --signature img.sig --payload ./img.hash.bundle
   after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle img.hash.bundle img.hash
+    - ./cosign verify-blob --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle img.hash.bundle img.hash
   allow_failure: true
   artifacts:
     when: always
@@ -156,7 +179,7 @@ staas-sign-container-image:
 
 # trivy_scan:
 #   stage: scan_image
-#   needs: ["docker-build"]
+#   needs: ["kaniko-build"]
 #   image: docker:24
 #   services:
 #     - name: docker:24-dind
@@ -172,7 +195,7 @@ staas-sign-container-image:
 
 trivy_sbom:
   stage: scan_image
-  needs: ["docker-build"]
+  needs: ["kaniko-build"]
   image: docker:24
   services:
     - name: docker:24-dind
@@ -194,7 +217,7 @@ trivy_sbom:
 
 staas-provenance:
   stage: attestations
-  needs: ["docker-build"]
+  needs: ["kaniko-build"]
   image: python:3.9
   before_script:
     - apt-get update && apt-get install jq -y
@@ -209,7 +232,7 @@ staas-provenance:
     - export COMMENT=provenance
     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
   after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
+    - ./cosign verify-blob --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
   allow_failure: true
   artifacts:
     when: always
@@ -229,7 +252,7 @@ staas-sbom:
     - export COMMENT=sbom
     - python3 staas-upload.py image.sbom.json $STAAS_API_TOKEN $COMMENT
   after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.sbom.json.bundle image.sbom.json
+    - ./cosign verify-blob --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.sbom.json.bundle image.sbom.json
   allow_failure: true
   artifacts:
     when: always

@@ -55,6 +55,21 @@ helm install gatekeeper/gatekeeper  \
     --version 3.10.0
 ```
 
+#### FluxCD
+[FluxCD](https://fluxcd.io/) is a Continious Deployment tool. When we make changes to container images or their corresponding .yaml files in a git repo, these changes are automatically detected by Flux, it pull the new changes and applies them to the cluster. The git repo is the source of truth. Whatever configuration exists in the git repo, it is 
+
+```sh
+### 3. Install FluxCD in cluster
+helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
+helm install gatekeeper/gatekeeper  \
+    --name-template=gatekeeper \
+    --namespace gatekeeper-system --create-namespace \
+    --set enableExternalData=true \
+    --set controllerManager.dnsPolicy=ClusterFirst,audit.dnsPolicy=ClusterFirst \
+    --version 3.10.0
+```
+
+
 #### Cosign Gatekeeper Provider
 For multiple reasons - and as stated above - OPA Gatekeeper cannot directly use the `http.send` function to acquire data that lives outside the cluster. This is why there this `external data` feature. Cosign gatekeeper provider is such a plugin. OPA Gatekeeper relays the signature verification to some pods installed on the cluster which exist specifically for this purpose.
 

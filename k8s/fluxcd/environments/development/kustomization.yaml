@@ -1,0 +1,4 @@
+resources:
+  - ../../default
+patches:
+  - dev_replicas.yaml
