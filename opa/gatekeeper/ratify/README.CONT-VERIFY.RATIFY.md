@@ -30,7 +30,7 @@ minikube start
 
 For ease you can add an `alias kubectl='minikube kubectl --'` to run `kubectl` directly in the terminal.
 
-#### Helm
+#### Helm & Helmfile
 [Helm](https://helm.sh/) is a Kubernetes package manager. We use it to install OPA Gatekeeper, specifically version 3.10 because this version is compatible with the cosign gatekeeper provider.
 
 ```sh
@@ -38,6 +38,8 @@ For ease you can add an `alias kubectl='minikube kubectl --'` to run `kubectl` d
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
+
+# to install helmfile please download a release < 1.0.0 from this link: https://github.com/helmfile/helmfile
 ```
 
 #### FluxCD
@@ -67,7 +69,7 @@ In a more complex use case, we could have many deployments under many namespaces
  
 
 #### Ratify & OPA Gatekeeper
-[OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper) is the Kubernetes version of OPA. It replaces the default admission controller, and replaces it with a custom one which knows how to run Rego policies. It provides CRDs to write our own constraints for .yaml files applied in the cluster, that enforce policies on them. Ratify connects with OPA Gatekeeper as an external provider, and runs some checks on the constraints set by Gatekeeper.
+[OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper) is the Kubernetes version of OPA. It replaces the default admission controller, with a custom one which knows how to run Rego policies. It provides CRDs to write our own constraints for .yaml files applied in the cluster, that enforce policies on them. Ratify connects with OPA Gatekeeper as an external provider, and runs some checks on the constraints set by Gatekeeper. In reality, ratify itself runs as a Pod in the gatekeeper-system namespace.
 
 ```sh
 ### 3. Install OPA Gatekeeper in cluster

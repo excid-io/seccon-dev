@@ -79,6 +79,8 @@ Then, there are two extra kustomizations under the `environments` folder:
 - the `production` kustomization which similarly applies 6 replicas
 
 In a more complex use case, we could have many deployments under many namespaces. In the `base` folder, we only consider the `default` namespace, where our Deploymet will exist.
+
+For our purposes, we create the `apps.yaml` configuration, which encompasses the kustomization to be applied in the cluster.
  
 
 
