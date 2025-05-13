@@ -1,3 +1,3 @@
 - op: replace #action 
-  path: /spec/replicas #resouirce we want to change
+  path: /spec/replicas #resource we want to change
   value: 2 #value we want to use for patching 
