@@ -52,6 +52,7 @@ export GITLAB_TOKEN=<gl-token>
 curl -s https://fluxcd.io/install.sh | sudo bash
 # The following command bootstraps FluxCD in a cluster which is controlled by a personal project in GitLab, not a group project (see flux documentation for more on that)
 flux bootstrap gitlab \  
+  --components-extra=image-reflector-controller,image-automation-controller \
   --deploy-token-auth \
   --owner=my-gitlab-username \
   --repository=my-project \
