@@ -59,6 +59,12 @@ flux bootstrap gitlab \
   --branch=main \
   --path=cluster/my-cluster \
   --personal
+
+# Lastly create a secret which Flux will use to authenticate itself to the repo and reconcile
+flux create secret git self-security-auth \
+--url=https://gitlab.com/some/repo \
+--username=<user> \
+--password=<password>
 ```
 
 The k8s files exist under the `apps` folder. In there, there are the .yaml and kustomization file. We create a base kustomization which just applies a Deployment with one replica for the image we build in our `.gitlab-ci.yaml` pipeline. 
