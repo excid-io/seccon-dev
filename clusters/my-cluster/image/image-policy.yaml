@@ -1,0 +1,12 @@
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: excid-image-policy
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: excid-image-repo
+  policy:
+    semver:
+      range: "*"
