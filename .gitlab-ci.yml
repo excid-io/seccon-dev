@@ -179,7 +179,10 @@ kaniko-build:
 cosign-sign-container-image:
   stage: container_signature
   needs: ["kaniko-build"]
-  image: python:3.9
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
   variables:
       COSIGN_YES: "true"
   id_tokens:
