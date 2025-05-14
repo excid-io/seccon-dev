@@ -129,20 +129,13 @@ kaniko-build:
     entrypoint: [""]
   variables:
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-    COSIGN_YES: "true"
-  id_tokens:
-    SIGSTORE_ID_TOKEN:
-      aud: sigstore
-  before_script:
-    - apt-get install cosign
   script:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --destination "${CI_REGISTRY_IMAGE}:latest"
       --image-name-with-digest-file tmp.hash
-    # - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
-    - cosign sign "${CI_REGISTRY_IMAGE}:latest"
+    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
   allow_failure: true
   artifacts:
     when: always
@@ -181,6 +174,25 @@ kaniko-build:
 #     when: always
 #     paths:
 #       - img.hash.bundle
+
+
+cosign-sign-container-image:
+  stage: container_signature
+  needs: ["kaniko-build"]
+  image: python:3.9
+  variables:
+      COSIGN_YES: "true"
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  before_script:
+    - apt-get update && apt-get install jq -y
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - mv cosign-linux-amd64 cosign
+    - chmod +x cosign
+  script:
+    - ./cosign sign "$CI_REGISTRY_IMAGE:latest"
+  allow_failure: true
 
 
 ################## scan_image ##################
