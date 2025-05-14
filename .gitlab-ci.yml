@@ -190,6 +190,7 @@ cosign-sign-container-image:
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - ./cosign sign "$CI_REGISTRY_IMAGE:latest"
   allow_failure: true
