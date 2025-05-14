@@ -189,7 +189,8 @@ cosign-sign-container-image:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   before_script:
-    - apt-get update && apt-get install jq -y
+    - apk --no-cache add curl
+    # - apk --no-cache add jq
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
