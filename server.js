@@ -27,7 +27,7 @@ app.use((request, response, next) => {
 
 // Index api is here, don't make route for it
 app.get('/', (req, res) => {
-    res.send("Hello world");
+    res.send("Hello world 2!!!\n");
 });
 
 // Spin the server

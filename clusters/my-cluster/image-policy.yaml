@@ -9,4 +9,4 @@ spec:
     name: excid-image-repo
   policy:
     semver:
-      range: "*"
+      range: 1.0.x
