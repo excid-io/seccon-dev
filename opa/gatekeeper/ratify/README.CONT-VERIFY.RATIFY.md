@@ -2,7 +2,7 @@
 
 Prerequisites: docker, docker-compose (or docker compose)
 
-In this README file we see how to verify container signatures and attestations in a Kubernetes-native way. We suppose that the CI happens somewhere, and a service like ArgoCD or FluxCD do the Continious Deployment part for us. We need an automated way to perform verification over our produced signatures, namely:
+In this README file we see how to verify container signatures and attestations in a Kubernetes-native way. We suppose that the CI happens within a GitLab runner, and a service like ArgoCD or FluxCD do the Continious Deployment part for us. FluxCD is used in our case. We need an automated way to perform verification over our produced signatures, namely:
 1. container signature
 2. sbom
 3. provenance
@@ -59,13 +59,6 @@ flux bootstrap gitlab \
   --path=clusters/my-cluster  \
   --personal \
   --components-extra=image-reflector-controller,image-automation-controller
-
-
-# Lastly create a secret which Flux will use to authenticate itself to the repo and reconcile
-flux create secret git self-security-auth \
---url=https://gitlab.com/some/repo \
---username=<user> \
---password=<password>
 ```
 
 The k8s files exist under the `apps` folder. In there, there are the .yaml and kustomization file. We create a base kustomization which just applies a Deployment with one replica for the image we build in our `.gitlab-ci.yaml` pipeline. 
@@ -75,6 +68,12 @@ Then, there are two extra kustomizations under the `environments` folder:
 
 In a more complex use case, we could have many deployments under many namespaces. In the `base` folder, we only consider the `default` namespace, where our Deploymet will exist.
  
+What we need to properly configure FluxCD is the above kustomization (or kustomizations) and some .yaml files that tell flux to monitor the OCI registry for new tags. We have three files for this:
+- image-repo.yaml
+- image-policy.yaml
+- image-update.yaml
+
+Whenever a new tag is uploaded on the GitLab container registry, flux detects the new tag and applies it to the cluster (policy can vary according to organization needs). We manually build images with new tags through the `.gitlab-ci.yaml` pipeline and sign them.
 
 #### Ratify & OPA Gatekeeper
 [OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper) is the Kubernetes version of OPA. It replaces the default admission controller, with a custom one which knows how to run Rego policies. It provides CRDs to write our own constraints for .yaml files applied in the cluster, that enforce policies on them. Ratify connects with OPA Gatekeeper as an external provider, and runs some checks on the constraints set by Gatekeeper. In reality, ratify itself runs as a Pod in the gatekeeper-system namespace.
@@ -82,6 +81,28 @@ In a more complex use case, we could have many deployments under many namespaces
 ```sh
 ### 3. Install OPA Gatekeeper in cluster
 helmfile sync -f git::https://github.com/ratify-project/ratify.git@helmfile.yaml
+```
+
+If this doesn't work, you can manually install Gatekeeper and Ratify afterwards (https://ratify.dev/docs/quickstarts/quickstart-manual):
+
+```sh
+# To install Gatekeeper
+helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
+helm install gatekeeper/gatekeeper  \
+  --name-template=gatekeeper \
+  --namespace gatekeeper-system --create-namespace \
+  --set enableExternalData=true \
+  --set validatingWebhookTimeoutSeconds=5 \
+  --set mutatingWebhookTimeoutSeconds=2 \
+  --set externaldataProviderResponseCacheTTL=10s
+
+
+# To install Ratify 
+helm repo add ratify https://ratify-project.github.io/ratify
+helm install ratify ratify/ratify \
+  --atomic \
+  --namespace gatekeeper-system \
+  --set cosign.enabled=true
 ```
 
 ### Test time
