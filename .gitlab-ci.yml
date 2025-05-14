@@ -134,14 +134,14 @@ kaniko-build:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   before_script:
-    - apk add --update cosign
+    - apt-get install cosign
   script:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --destination "${CI_REGISTRY_IMAGE}:latest"
       --image-name-with-digest-file tmp.hash
-    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
+    # - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
     - cosign sign "${CI_REGISTRY_IMAGE}:latest"
   allow_failure: true
   artifacts:
