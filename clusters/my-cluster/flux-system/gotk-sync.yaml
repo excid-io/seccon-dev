@@ -11,7 +11,7 @@ spec:
     branch: main
   secretRef:
     name: flux-system
-  url: ssh://git@gitlab.com/lefosg/excid-cicd-demo-project
+  url: https://gitlab.com/lefosg/excid-cicd-demo-project.git
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
