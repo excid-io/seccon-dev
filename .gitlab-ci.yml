@@ -335,6 +335,7 @@ cosign-attest-sbom:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   before_script:
+    - apk --no-cache add curl
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
