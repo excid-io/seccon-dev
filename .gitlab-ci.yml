@@ -195,7 +195,8 @@ cosign-sign-container-image:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.3" # --registry-referrers-mode=oci-1-1 
+    # - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.3" # --registry-referrers-mode=oci-1-1 
+    - COSIGN_EXPERIMENTAL=1 ./cosign sign --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE:1.0.3"  
 # use oras afterwards (locally) to check that the imgage is associated with its signature
 # oras discover registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.3
 
@@ -244,9 +245,6 @@ trivy_sbom:
   script:
     - docker pull "$CI_REGISTRY_IMAGE:1.0.3"
     - trivy image "$CI_REGISTRY_IMAGE:1.0.3" --format spdx-json --output image.sbom.json    
-    # attach sbom to image
-    # - COSIGN_OCI_EXPERIMENTAL=1 ./cosign attach sbom --sbom image.sbom.json --type spdx "$CI_REGISTRY_IMAGE:1.0.3"
-
   allow_failure: true
   artifacts:
     when: always
