@@ -313,7 +313,7 @@ trivy_sbom:
 #     - |
 #       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
 #       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-#     - ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.3"
+#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.3"
 #   allow_failure: true
 
   
@@ -327,7 +327,7 @@ cosign-attest-sbom:
     - chmod +x cosign
     - pip install requests
   script:
-    - ./cosign attest -y --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.3"
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.3"
   allow_failure: true
 
 ################## deploy ##################
