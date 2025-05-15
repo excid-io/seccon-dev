@@ -133,7 +133,7 @@ kaniko-build:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:1.0.3"
+      --destination "${CI_REGISTRY_IMAGE}:1.0.4"
       --image-name-with-digest-file tmp.hash
     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
   allow_failure: true
@@ -195,10 +195,10 @@ cosign-sign-container-image:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    # - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.3" # --registry-referrers-mode=oci-1-1 
-    - COSIGN_EXPERIMENTAL=1 ./cosign sign --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE:1.0.3"  
+    # - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.4" # --registry-referrers-mode=oci-1-1 
+    - COSIGN_EXPERIMENTAL=1 ./cosign sign --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE:1.0.4"  
 # use oras afterwards (locally) to check that the imgage is associated with its signature
-# oras discover registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.3
+# oras discover registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.4
 
   allow_failure: true
 
@@ -243,8 +243,8 @@ trivy_sbom:
     - apk --no-cache add python3 py3-pip
     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
   script:
-    - docker pull "$CI_REGISTRY_IMAGE:1.0.3"
-    - trivy image "$CI_REGISTRY_IMAGE:1.0.3" --format spdx-json --output image.sbom.json    
+    - docker pull "$CI_REGISTRY_IMAGE:1.0.4"
+    - trivy image "$CI_REGISTRY_IMAGE:1.0.4" --format spdx-json --output image.sbom.json    
   allow_failure: true
   artifacts:
     when: always
@@ -316,7 +316,7 @@ trivy_sbom:
 #     - |
 #       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
 #       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.3"
+#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.4"
 #   allow_failure: true
 
   
@@ -339,7 +339,7 @@ cosign-attest-sbom:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.3"
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.4"
   allow_failure: true
 
 ################## deploy ##################

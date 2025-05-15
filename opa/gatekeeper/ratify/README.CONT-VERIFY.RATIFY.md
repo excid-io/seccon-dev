@@ -99,10 +99,14 @@ helm install gatekeeper/gatekeeper  \
 
 # To install Ratify 
 helm repo add ratify https://ratify-project.github.io/ratify
-helm install ratify ratify/ratify \
-  --atomic \
-  --namespace gatekeeper-system \
-  --set cosign.enabled=true
+# download the notary verification certificate
+curl -sSLO https://raw.githubusercontent.com/deislabs/ratify/main/test/testdata/notation.crt
+helm install ratify \
+    ratify/ratify --atomic \
+    --namespace gatekeeper-system \
+    --set-file notationCerts={./notation.crt} \
+    --set featureFlags.RATIFY_CERT_ROTATION=true \
+    --set policy.useRego=true
 ```
 
 ### Test time
