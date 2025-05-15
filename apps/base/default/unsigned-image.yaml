@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: excid-cicd-demo-project-unsigned
+  namespace: default
+  labels:
+    app: excid-cicd-demo-project-unsigned
+spec:
+  replicas: 1  # this is patched separately in each environment
+  selector:
+    matchLabels:
+      app: excid-cicd-demo-project-unsigned
+  template:
+    metadata:
+      labels:
+        app: excid-cicd-demo-project-unsigned
+    spec:
+      containers:
+      - name: excid-cicd-demo-project-unsigned
+        image: registry.gitlab.com/lefosg/excid-cicd-demo-project:unsigned
+        ports:
+        - containerPort: 9090
+        # env:
+        # - name: HTTP_PORT
+        #   value: 9090
+---
