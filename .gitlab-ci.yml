@@ -228,13 +228,26 @@ trivy_sbom:
   services:
     - name: docker:24-dind
       alias: docker
+  variables:
+      COSIGN_YES: "true"
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
   before_script:
-    - apk --no-cache add curl python3 py3-pip
-    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+    - apk --no-cache add curl
+    # - apk --no-cache add jq
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - mv cosign-linux-amd64 cosign
+    - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - apk --no-cache add python3 py3-pip
+    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
   script:
-    - docker pull "$CI_REGISTRY_IMAGE:latest"
-    - trivy image "$CI_REGISTRY_IMAGE:latest" --format spdx-json --output image.sbom.json    
+    - docker pull "$CI_REGISTRY_IMAGE:1.0.3"
+    - trivy image "$CI_REGISTRY_IMAGE:1.0.3" --format spdx-json --output image.sbom.json    
+    # attach sbom to image
+    - COSIGN_OCI_EXPERIMENTAL=1 ./cosign attach sbom --sbom image.sbom.json --type spdx "$CI_REGISTRY_IMAGE:1.0.3"
+
   allow_failure: true
   artifacts:
     when: always
