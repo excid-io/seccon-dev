@@ -333,8 +333,9 @@ cosign-attest-sbom:
       aud: sigstore
   before_script:
     - apt-get update && apt-get install jq -y
+    - apt-get install cosign -y
   script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.3"
+    - COSIGN_EXPERIMENTAL=1 cosign attest -y --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.3"
   allow_failure: true
 
 ################## deploy ##################
