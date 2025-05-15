@@ -308,6 +308,7 @@ cosign-attest-provenance:
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
     - pip install requests
+    - apt-get update && apt-get install jq 
   script:
     - |
       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
