@@ -136,6 +136,11 @@ kaniko-build:
       --destination "${CI_REGISTRY_IMAGE}:1.0.3"
       --image-name-with-digest-file tmp.hash
     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
+    # build again using sha256 tag
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}@sha256:${IMAGE_DIGEST}"
   allow_failure: true
   artifacts:
     when: always
@@ -197,6 +202,10 @@ cosign-sign-container-image:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - COSIGN_EXPERIMENTAL=1  ./cosign sign --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE:1.0.3"
+    - IMAGE_DIGEST=$(cat img.hash)
+    - COSIGN_EXPERIMENTAL=1  ./cosign sign --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE@sha256${IMAGE_DIGEST}"
+# use oras afterwards (locally) to check that the imgage is associated with its signature
+# oras discover registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.3
 
   allow_failure: true
 
