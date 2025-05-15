@@ -8,7 +8,7 @@ RUN npm install
 
 COPY server.js .
 
-ENV HTTP_PORT=8080
+ENV HTTP_PORT=9090
 
 EXPOSE 9090
 
