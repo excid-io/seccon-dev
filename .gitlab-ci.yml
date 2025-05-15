@@ -327,7 +327,7 @@ cosign-attest-sbom:
     - chmod +x cosign
     - pip install requests
   script:
-    - ./cosign attest --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.3"
+    - ./cosign attest -y --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.3"
   allow_failure: true
 
 ################## deploy ##################
