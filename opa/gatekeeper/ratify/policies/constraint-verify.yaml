@@ -1,12 +1,13 @@
 apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sExternalDataCosign
+kind: RatifyVerification
 metadata:
-  name: cosign-gatekeeper-provider
+  name: ratify-constraint
 spec:
   enforcementAction: deny
   match:
-    namespaces:
-      - default
     kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment"]
+    namespaces: ["default"]

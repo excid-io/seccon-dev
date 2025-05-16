@@ -14,8 +14,21 @@ spec:
         
         # Get data from Ratify
         remote_data := response {
-          images := [img | img = input.review.object.spec.containers[_].image]
+          images := get_images(input.review.object)
           response := external_data({"provider": "ratify-provider", "keys": images})
+        }
+
+        # Extract images based on resource type
+        get_images(obj) = images {
+          # For Pods
+          obj.kind == "Pod"
+          images := [img | img = obj.spec.containers[_].image]
+        }
+        
+        get_images(obj) = images {
+          # For Deployments
+          obj.kind == "Deployment"
+          images := [img | img = obj.spec.template.spec.containers[_].image]
         }
 
         # Base Gatekeeper violation

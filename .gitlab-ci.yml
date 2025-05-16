@@ -90,6 +90,8 @@ stages:
 
 ################## build_image ##################
 
+# There is no "real" difference between the two build jobs. 
+# Kaniko is a more secure way of building images in the GitLab CI case (instead of DinD)
 # docker-build:
 #   stage: build_image
 #   # needs: ["retire"]
@@ -164,7 +166,6 @@ kaniko-build-unsigned:
       exists:
         - Dockerfile
 
-
 ################## container_signature ##################
 
 # staas-sign-container-image:
@@ -192,7 +193,6 @@ kaniko-build-unsigned:
 #     paths:
 #       - img.hash.bundle
 
-
 cosign-sign-container-image:
   stage: container_signature
   needs: ["kaniko-build"]
@@ -217,11 +217,7 @@ cosign-sign-container-image:
     - ./cosign sign "$CI_REGISTRY_IMAGE:1.0.5"  # COSIGN_EXPERIMENTAL=1  --registry-referrers-mode=oci-1-1
   after_script:
     - COSIGN_EXPERIMENTAL=1 ./cosign verify registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5 --experimental-oci11=true --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
-# use oras afterwards (locally) to check that the imgage is associated with its signature
-# oras discover registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5
-
   allow_failure: true
-
 
 ################## scan_image ##################
 
@@ -264,7 +260,6 @@ trivy_sbom:
     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
   script:
     - docker pull "$CI_REGISTRY_IMAGE:1.0.5"
-    # - trivy image "$CI_REGISTRY_IMAGE:1.0.5" --format spdx-json --output image.sbom.json    
     - trivy image --format spdx-json -o image.sbom.json "$CI_REGISTRY_IMAGE:1.0.5"
   allow_failure: true
   artifacts:
@@ -318,30 +313,8 @@ trivy_sbom:
 #     when: always
 #     paths:
 #       - image.sbom.json.bundle
-  
-# cosign-attest-provenance:
-#   stage: attestations
-#   needs: ["trivy_sbom"]
-#   image: python:3.9
-  # variables:
-  #   COSIGN_YES: "true"
-  # id_tokens:
-  #   SIGSTORE_ID_TOKEN:
-  #     aud: sigstore
-#   before_script:
-#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#     - mv cosign-linux-amd64 cosign
-#     - chmod +x cosign
-#     - pip install requests
-#     - apt-get update && apt-get install jq -y
-#   script:
-#     - |
-#       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
-#       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.5"
-#   allow_failure: true
 
-
+# Can also use syft to generate and attest the SBOM (instead of trivy, use whichever you prefer)
 # syft-attest-sbom:
 #   stage: scan_image
 #   needs: ["kaniko-build"]
@@ -366,12 +339,33 @@ trivy_sbom:
 #     - syft attest "$CI_REGISTRY_IMAGE:1.0.5" -o spdx-json > image.sbom.json
 #   after-script:
 #     - cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.5" --type 'https://spdx.dev/Document' --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.* | jq
-
 #   artifacts:
 #     when: always
 #     paths:
 #       - image.sbom.json
   
+# cosign-attest-provenance:
+#   stage: attestations
+#   needs: ["trivy_sbom"]
+#   image: python:3.9
+#   variables:
+#     COSIGN_YES: "true"
+#   id_tokens:
+#     SIGSTORE_ID_TOKEN:
+#       aud: sigstore
+#   before_script:
+#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+#     - mv cosign-linux-amd64 cosign
+#     - chmod +x cosign
+#     - pip install requests
+#     - apt-get update && apt-get install jq -y
+#   script:
+#     - |
+#       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
+#       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
+#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.5"
+#   allow_failure: true
+
 cosign-attest-sbom:
   stage: attestations
   needs: ["trivy_sbom"]

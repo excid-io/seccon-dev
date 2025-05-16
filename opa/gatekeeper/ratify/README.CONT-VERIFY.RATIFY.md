@@ -83,7 +83,7 @@ Whenever a new tag is uploaded on the GitLab container registry, flux detects th
 helmfile sync -f git::https://github.com/ratify-project/ratify.git@helmfile.yaml
 ```
 
-If this doesn't work, you can manually install Gatekeeper and Ratify afterwards (https://ratify.dev/docs/quickstarts/quickstart-manual):
+If this doesn't work, you can manually install Gatekeeper and Ratify which is actually the preferred way (https://ratify.dev/docs/quickstarts/quickstart-manual):
 
 ```sh
 # To install Gatekeeper
@@ -108,10 +108,16 @@ helm install ratify \
     --set featureFlags.RATIFY_CERT_ROTATION=true \
     --set policy.useRego=true
 ```
+Lastly, delete the default cosign verifier crd that comes with Ratify, and - for keyless verification - apply the `cosign-verifier.yaml` file found in the policies folder.
 
 ### Test time
 
 Create some test cases for deploying. Try one container which is not signed, and a signed one. 
+First we need to set some policies that implement this logic. There are some in the Ratify Quick Start page:
+```sh
+kubectl apply -f https://ratify-project.github.io/ratify/library/default/template.yaml
+kubectl apply -f https://ratify-project.github.io/ratify/library/default/samples/constraint.yaml
+```
 
 The documentation of Ratify provides some demo images, a singed and an unsigned one.
 
@@ -126,6 +132,14 @@ This should effectively create a container in the cluster.
 kubectl run demo1 --image=ghcr.io/deislabs/ratify/notary-image:unsigned -n default
 ```
 This should throw an error.
+
+Additionally, try running our own images:
+```sh
+kubectl run demo2 --image=registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5 -n default
+kubectl run demo3 --image=registry.gitlab.com/lefosg/excid-cicd-demo-project:unsigned -n default
+```
+
+The first should succeed, and the second should throw an error.
 
 
 ## Manual verification with Ratify CLI
