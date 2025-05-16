@@ -6,7 +6,7 @@ metadata:
   labels:
     app: excid-cicd-demo-project-unsigned
 spec:
-  replicas: 1  # this is patched separately in each environment
+  replicas: 1 
   selector:
     matchLabels:
       app: excid-cicd-demo-project-unsigned
@@ -20,7 +20,4 @@ spec:
         image: registry.gitlab.com/lefosg/excid-cicd-demo-project:unsigned
         ports:
         - containerPort: 9090
-        # env:
-        # - name: HTTP_PORT
-        #   value: 9090
 ---
