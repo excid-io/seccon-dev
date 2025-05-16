@@ -216,7 +216,7 @@ cosign-sign-container-image:
     # - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.5" # --registry-referrers-mode=oci-1-1 
     - ./cosign sign "$CI_REGISTRY_IMAGE:1.0.5"  # COSIGN_EXPERIMENTAL=1  --registry-referrers-mode=oci-1-1
   after_script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5 --experimental-oci11=true --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.5" --experimental-oci11=true --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
 
 ################## scan_image ##################
