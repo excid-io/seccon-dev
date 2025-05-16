@@ -373,7 +373,7 @@ cosign-attest-sbom:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdx-json --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.5"
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdx --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.5"
   after_script:
     - ./cosign verify-attestation --type 'https://spdx.dev/Document' "$CI_REGISTRY_IMAGE:1.0.5" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
