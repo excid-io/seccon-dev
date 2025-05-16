@@ -146,17 +146,6 @@ kaniko-build:
       exists:
         - Dockerfile
 
-kaniko-build-unsigned:
-  stage: build_image
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  script:
-    - /kaniko/executor
-      --context "${CI_PROJECT_DIR}"
-      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:unsigned"
-  allow_failure: true
 
 ################## container_signature ##################
 
@@ -207,7 +196,9 @@ cosign-sign-container-image:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     # - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.5" # --registry-referrers-mode=oci-1-1 
-    - COSIGN_EXPERIMENTAL=1 ./cosign sign --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE:1.0.5"  
+    - COSIGN_EXPERIMENTAL=1 ./cosign sign --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE:1.0.5"
+  after_script:
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5 --experimental-oci11=true --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
 # use oras afterwards (locally) to check that the imgage is associated with its signature
 # oras discover registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5
 
@@ -255,7 +246,8 @@ trivy_sbom:
     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
   script:
     - docker pull "$CI_REGISTRY_IMAGE:1.0.5"
-    - trivy image "$CI_REGISTRY_IMAGE:1.0.5" --format spdx-json --output image.sbom.json    
+    # - trivy image "$CI_REGISTRY_IMAGE:1.0.5" --format spdx-json --output image.sbom.json    
+    - trivy image --format cyclonedx -o image.sbom.json "$CI_REGISTRY_IMAGE:1.0.5"
   allow_failure: true
   artifacts:
     when: always
@@ -350,7 +342,9 @@ cosign-attest-sbom:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdxjson --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.5"
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type cyclonedx --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.5"
+  after_script:
+    - ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.5" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
 
 ################## deploy ##################
