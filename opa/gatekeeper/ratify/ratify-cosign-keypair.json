@@ -1,0 +1,30 @@
+{
+    "store": {
+        "version": "1.0.0",
+        "plugins": [
+            {
+                "name": "oras",
+                "cosignEnabled": true
+            }
+        ]
+    },
+    "policy": {
+        "version": "1.0.0",
+        "plugin": {
+            "name": "configPolicy",
+            "artifactVerificationPolicies": {
+                "application/vnd.dev.cosign.artifact.sig.v1+json": "any"
+            }
+        }
+    },
+    "verifier": {
+        "version": "1.0.0",
+        "plugins": [
+            {
+                "name":"cosign",
+                "artifactTypes": "application/vnd.dev.cosign.artifact.sig.v1+json",
+                "key": "/path/to/cosign.pub"  // Change this to the path of your public key
+            }
+        ]
+    }
+}

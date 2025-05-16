@@ -126,3 +126,17 @@ This should effectively create a container in the cluster.
 kubectl run demo1 --image=ghcr.io/deislabs/ratify/notary-image:unsigned -n default
 ```
 This should throw an error.
+
+
+## Manual verification with Ratify CLI
+
+You can use Ratify CLI to verify the images too, for testing purposes, and emulate the Pod behavior locally. There are two json files in this directory:
+- ratify-cosign-keyless.json
+- ratify-cosign-keypair.json
+
+We run the command as `ratify verify -c conf.json -s image-uri`. For example:
+```sh
+ratify verify -c ratify-cosign-keyless.json -s registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5
+```
+
+In the scenario where you want to verify using your public key, go to the `ratify-cosign-keypair.json` and change the line which contains the path of the key (and delete the comment too).
