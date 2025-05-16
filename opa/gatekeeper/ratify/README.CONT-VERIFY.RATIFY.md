@@ -79,11 +79,11 @@ Whenever a new tag is uploaded on the GitLab container registry, flux detects th
 [OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper) is the Kubernetes version of OPA. It replaces the default admission controller, with a custom one which knows how to run Rego policies. It provides CRDs to write our own constraints for .yaml files applied in the cluster, that enforce policies on them. Ratify connects with OPA Gatekeeper as an external provider, and runs some checks on the constraints set by Gatekeeper. In reality, ratify itself runs as a Pod in the gatekeeper-system namespace.
 
 ```sh
-### 3. Install OPA Gatekeeper in cluster
+### 3. Quick install OPA Gatekeeper and Ratify in cluster, along with some demo policies (all in one - not preferred)
 helmfile sync -f git::https://github.com/ratify-project/ratify.git@helmfile.yaml
 ```
 
-If this doesn't work, you can manually install Gatekeeper and Ratify which is actually the preferred way (https://ratify.dev/docs/quickstarts/quickstart-manual):
+If this doesn't work or you just dont want the all-in-one installation, you can manually install Gatekeeper and Ratify which is actually the preferred way (https://ratify.dev/docs/quickstarts/quickstart-manual):
 
 ```sh
 # To install Gatekeeper
@@ -108,15 +108,21 @@ helm install ratify \
     --set featureFlags.RATIFY_CERT_ROTATION=true \
     --set policy.useRego=true
 ```
-Lastly, delete the default cosign verifier crd that comes with Ratify, and - for keyless verification - apply the `cosign-verifier.yaml` file found in the policies folder.
+In order to verify signatures produced by cosign in keyless mode, delete the default cosign verifier crd that comes with Ratify, and apply the `cosign-verifier.yaml` file found in the policies folder.
+```sh
+kubectl delete verifier verifier-cosign 
+kubectl apply -f opa/gatekeeper/ratify/policies/cosign-verifier.yaml 
+```
+
+Whenever **FluxCD** reconciles, it will pull the .yaml files or new container image version, apply them to the cluster, and in order for a Deployment or Pod to pass (according to the policies found in this repo), they have to undergo these signatures checks. 
 
 ### Test time
 
 Create some test cases for deploying. Try one container which is not signed, and a signed one. 
 First we need to set some policies that implement this logic. There are some in the Ratify Quick Start page:
 ```sh
-kubectl apply -f https://ratify-project.github.io/ratify/library/default/template.yaml
-kubectl apply -f https://ratify-project.github.io/ratify/library/default/samples/constraint.yaml
+kubectl apply -f opa/gatekeeper/ratify/policies/constraint-verify.yaml
+kubectl apply -f opa/gatekeeper/ratify/policies/template-verify-sig-ratify.yaml
 ```
 
 The documentation of Ratify provides some demo images, a singed and an unsigned one.
@@ -135,12 +141,15 @@ This should throw an error.
 
 Additionally, try running our own images:
 ```sh
-kubectl run demo2 --image=registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5 -n default
-kubectl run demo3 --image=registry.gitlab.com/lefosg/excid-cicd-demo-project:unsigned -n default
+kubectl run demo2 --image=registry.gitlab.com/lefosg/excid-cicd-demo-project:1.0.5 -n default  # pass
+kubectl run demo3 --image=registry.gitlab.com/lefosg/excid-cicd-demo-project:unsigned -n default  # fail
 ```
 
-The first should succeed, and the second should throw an error.
-
+Then, you can try applying Deployment files, like the ones found in `apps/base/default`.
+```sh
+kubectl apply -f apps/base/default/unsigned-image.yaml  # pass
+kubectl apply -f apps/base/default/image.yaml  # fail
+```
 
 ## Manual verification with Ratify CLI
 
