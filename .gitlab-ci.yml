@@ -368,31 +368,7 @@ trivy_sbom:
 #     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.7"
 #   allow_failure: true
 
-# cosign-attest-sbom:
-#   stage: attestations
-#   needs: ["trivy_sbom"]
-#   image: docker:24
-#   services:
-#     - name: docker:24-dind
-#       alias: docker
-#   variables:
-#       COSIGN_YES: "true"
-#   id_tokens:
-#     SIGSTORE_ID_TOKEN:
-#       aud: sigstore
-#   before_script:
-#     - apk --no-cache add curl
-#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#     - mv cosign-linux-amd64 cosign
-#     - chmod +x cosign
-#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-#   script:
-#     - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdx --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
-#   after_script:
-#     - ./cosign verify-attestation --type 'https://spdx.dev/Document' "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
-#   allow_failure: true
-
-oras-cosign-attest-sbom:
+cosign-attest-sbom:
   stage: attestations
   needs: ["trivy_sbom"]
   image: docker:24
@@ -400,35 +376,59 @@ oras-cosign-attest-sbom:
     - name: docker:24-dind
       alias: docker
   variables:
-    DOCKER_TLS_CERTDIR: ""
-    COSIGN_YES: "true"
+      COSIGN_YES: "true"
   id_tokens:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   before_script:
     - apk --no-cache add curl
-    - apk --no-cache add jq
-    - | # install cosign
-      curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-      mv cosign-linux-amd64 cosign
-      chmod +x cosign
-      mv cosign /usr/local/bin
-      echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - | # install oras
-      VERSION="1.2.2"
-      curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
-      mkdir -p oras-install/
-      tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
-      mv oras-install/oras /usr/local/bin/
-      rm -rf oras_${VERSION}_*.tar.gz oras-install/
-    - echo $CI_REGISTRY_PASSWORD | oras login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - mv cosign-linux-amd64 cosign
+    - chmod +x cosign
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - oras attach --artifact-type text/spdx+json "$CI_REGISTRY_IMAGE:1.0.7" image.sbom.json
-    - report_digest=$(oras discover "$CI_REGISTRY_IMAGE:1.0.7"  -o json | jq .manifests[0].digest | tr -d \") 
-    - COSIGN_EXPERIMENTAL=1 cosign sign -y --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE@$report_digest"
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdx --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
   after_script:
-    - oras discover $CI_REGISTRY_IMAGE:1.0.7
+    - ./cosign verify-attestation --type 'https://spdx.dev/Document' "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
+
+# oras-cosign-attest-sbom:
+#   stage: attestations
+#   needs: ["trivy_sbom"]
+#   image: docker:24
+#   services:
+#     - name: docker:24-dind
+#       alias: docker
+#   variables:
+#     DOCKER_TLS_CERTDIR: ""
+#     COSIGN_YES: "true"
+#   id_tokens:
+#     SIGSTORE_ID_TOKEN:
+#       aud: sigstore
+#   before_script:
+#     - apk --no-cache add curl
+#     - apk --no-cache add jq
+#     - | # install cosign
+#       curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+#       mv cosign-linux-amd64 cosign
+#       chmod +x cosign
+#       mv cosign /usr/local/bin
+#       echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+#     - | # install oras
+#       VERSION="1.2.2"
+#       curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
+#       mkdir -p oras-install/
+#       tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
+#       mv oras-install/oras /usr/local/bin/
+#       rm -rf oras_${VERSION}_*.tar.gz oras-install/
+#     - echo $CI_REGISTRY_PASSWORD | oras login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+#   script:
+#     - oras attach --artifact-type text/spdx+json "$CI_REGISTRY_IMAGE:1.0.7" image.sbom.json
+#     - report_digest=$(oras discover "$CI_REGISTRY_IMAGE:1.0.7"  -o json | jq .manifests[0].digest | tr -d \") 
+#     - COSIGN_EXPERIMENTAL=1 cosign sign -y --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE@$report_digest"
+#   after_script:
+#     - oras discover $CI_REGISTRY_IMAGE:1.0.7
+#   allow_failure: true
 
 
 ################## deploy ##################

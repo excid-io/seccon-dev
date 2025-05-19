@@ -18,18 +18,18 @@ spec:
           response := external_data({"provider": "ratify-provider", "keys": images})
         }
 
-        # Extract images based on resource type
-        get_images(obj) = images {
-          # For Pods
-          obj.kind == "Pod"
-          images := [img | img = obj.spec.containers[_].image]
-        }
-        
+        # # Extract images based on resource type
         # get_images(obj) = images {
-        #   # For Deployments
-        #   obj.kind == "Deployment"
-        #   images := [img | img = obj.spec.template.spec.containers[_].image]
+        #   # For Pods
+        #   obj.kind == "Pod"
+        #   images := [img | img = obj.spec.containers[_].image]
         # }
+        
+        get_images(obj) = images {
+          # For Deployments
+          obj.kind == "Deployment"
+          images := [img | img = obj.spec.template.spec.containers[_].image]
+        }
 
         # Base Gatekeeper violation
         violation[{"msg": msg}] {

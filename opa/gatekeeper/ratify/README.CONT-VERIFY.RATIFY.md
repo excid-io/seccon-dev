@@ -42,39 +42,6 @@ chmod 700 get_helm.sh
 # to install helmfile please download a release < 1.0.0 from this link: https://github.com/helmfile/helmfile
 ```
 
-#### FluxCD
-[FluxCD](https://fluxcd.io/) is a Continious Deployment tool. When we make changes to OCI container images or their corresponding .yaml files in a git repo, these changes are automatically detected by Flux. It pulls the new changes and applies them to the cluster. The git repo is the source of truth. Whatever configuration exists in the git repo, is applied in the cluster.
-
-```sh
-### 3. Install FluxCD in cluster
-export GITLAB_TOKEN=<gl-token>
-# Then install flux cli
-curl -s https://fluxcd.io/install.sh | sudo bash
-# The following command bootstraps FluxCD in a cluster which is controlled by a personal project in GitLab, not a group project (see flux documentation for more on that)
-flux bootstrap gitlab \
-  --token-auth  \
-  --owner=lefosg  \
-  --repository=excid-cicd-demo-project  \
-  --branch=main \
-  --path=clusters/my-cluster  \
-  --personal \
-  --components-extra=image-reflector-controller,image-automation-controller
-```
-
-The k8s files exist under the `apps` folder. In there, there are the .yaml and kustomization file. We create a base kustomization which just applies a Deployment with one replica for the image we build in our `.gitlab-ci.yaml` pipeline. 
-Then, there are two extra kustomizations under the `environments` folder:
-- the `development` kustomization which only patches the kustomization to use 2 replicas
-- the `production` kustomization which similarly applies 6 replicas
-
-In a more complex use case, we could have many deployments under many namespaces. In the `base` folder, we only consider the `default` namespace, where our Deploymet will exist.
- 
-What we need to properly configure FluxCD is the above kustomization (or kustomizations) and some .yaml files that tell flux to monitor the OCI registry for new tags. We have three files for this:
-- image-repo.yaml
-- image-policy.yaml
-- image-update.yaml
-
-Whenever a new tag is uploaded on the GitLab container registry, flux detects the new tag and applies it to the cluster (policy can vary according to organization needs). We manually build images with new tags through the `.gitlab-ci.yaml` pipeline and sign them.
-
 #### Ratify & OPA Gatekeeper
 [OPA Gatekeeper](https://github.com/open-policy-agent/gatekeeper) is the Kubernetes version of OPA. It replaces the default admission controller, with a custom one which knows how to run Rego policies. It provides CRDs to write our own constraints for .yaml files applied in the cluster, that enforce policies on them. Ratify connects with OPA Gatekeeper as an external provider, and runs some checks on the constraints set by Gatekeeper. In reality, ratify itself runs as a Pod in the gatekeeper-system namespace.
 
@@ -116,16 +83,59 @@ kubectl delete verifier verifier-cosign
 kubectl apply -f opa/gatekeeper/ratify/policies/cosign-verifier.yaml 
 ```
 
-Whenever **FluxCD** reconciles, it will pull the .yaml files or new container image version, apply them to the cluster, and in order for a Deployment or Pod to pass (according to the policies found in this repo), they have to undergo these signatures checks. 
-
-### Test time
-
 Create some test cases for deploying. Try one container which is not signed, and a signed one. 
 First we need to set some policies that implement this logic. There are some in the Ratify Quick Start page:
 ```sh
 kubectl apply -f opa/gatekeeper/ratify/policies/constraint-verify.yaml
 kubectl apply -f opa/gatekeeper/ratify/policies/template-verify-sig-ratify.yaml
 ```
+
+Whenever **FluxCD** reconciles, it will pull the .yaml files or new container image version, apply them to the cluster, and in order for a Deployment or Pod to pass (according to the policies found in this repo), they have to undergo these signatures checks. 
+
+To uninstall Ratify run:
+```sh
+kubectl delete -f https://ratify-project.github.io/ratify/library/default/template.yaml
+kubectl delete -f https://ratify-project.github.io/ratify/library/default/samples/constraint.yaml
+helm delete ratify --namespace gatekeeper-system
+kubectl delete crd stores.config.ratify.deislabs.io verifiers.config.ratify.deislabs.io certificatestores.config.ratify.deislabs.io policies.config.ratify.deislabs.io
+```
+
+#### FluxCD
+[FluxCD](https://fluxcd.io/) is a Continious Deployment tool. When we make changes to OCI container images or their corresponding .yaml files in a git repo, these changes are automatically detected by Flux. It pulls the new changes and applies them to the cluster. The git repo is the source of truth. Whatever configuration exists in the git repo, is applied in the cluster.
+
+```sh
+### 3. Install FluxCD in cluster
+export GITLAB_TOKEN=<gl-token>
+# Then install flux cli
+curl -s https://fluxcd.io/install.sh | sudo bash
+# The following command bootstraps FluxCD in a cluster which is controlled by a personal project in GitLab, not a group project (see flux documentation for more on that)
+flux bootstrap gitlab \
+  --token-auth  \
+  --owner=lefosg  \
+  --repository=excid-cicd-demo-project  \
+  --branch=main \
+  --path=clusters/my-cluster  \
+  --personal \
+  --components-extra=image-reflector-controller,image-automation-controller
+```
+
+The k8s files exist under the `apps` folder. In there, there are the .yaml and kustomization file. We create a base kustomization which just applies a Deployment with one replica for the image we build in our `.gitlab-ci.yaml` pipeline. 
+Then, there are two extra kustomizations under the `environments` folder:
+- the `development` kustomization which only patches the kustomization to use 2 replicas
+- the `production` kustomization which similarly applies 6 replicas
+
+In a more complex use case, we could have many deployments under many namespaces. In the `base` folder, we only consider the `default` namespace, where our Deploymet will exist.
+ 
+What we need to properly configure FluxCD is the above kustomization (or kustomizations) and some .yaml files that tell flux to monitor the OCI registry for new tags. We have three files for this:
+- image-repo.yaml
+- image-policy.yaml
+- image-update.yaml
+
+Whenever a new tag is uploaded on the GitLab container registry, flux detects the new tag and applies it to the cluster (policy can vary according to organization needs). We manually build images with new tags through the `.gitlab-ci.yaml` pipeline and sign them.
+
+
+
+### Test time
 
 The documentation of Ratify provides some demo images, a singed and an unsigned one.
 
