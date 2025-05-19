@@ -25,11 +25,11 @@ spec:
           images := [img | img = obj.spec.containers[_].image]
         }
         
-        get_images(obj) = images {
-          # For Deployments
-          obj.kind == "Deployment"
-          images := [img | img = obj.spec.template.spec.containers[_].image]
-        }
+        # get_images(obj) = images {
+        #   # For Deployments
+        #   obj.kind == "Deployment"
+        #   images := [img | img = obj.spec.template.spec.containers[_].image]
+        # }
 
         # Base Gatekeeper violation
         violation[{"msg": msg}] {
