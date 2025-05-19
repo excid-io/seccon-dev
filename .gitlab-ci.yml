@@ -214,8 +214,8 @@ cosign-sign-container-image:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    # - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.7" # --registry-referrers-mode=oci-1-1 
-    - ./cosign sign "$CI_REGISTRY_IMAGE:1.0.7"  # COSIGN_EXPERIMENTAL=1  --registry-referrers-mode=oci-1-1
+    - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.7" --registry-referrers-mode=oci-1-1 
+    # - ./cosign sign "$CI_REGISTRY_IMAGE:1.0.7"  # COSIGN_EXPERIMENTAL=1  --registry-referrers-mode=oci-1-1
   after_script:
     - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --experimental-oci11=true --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
