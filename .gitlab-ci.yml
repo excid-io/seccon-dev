@@ -422,7 +422,7 @@ oras-cosign-attest-sbom:
   script:
     - oras attach --artifact-type text/spdx+json "$CI_REGISTRY_IMAGE:1.0.7" image.sbom.json
     - report_digest=$(oras discover "$CI_REGISTRY_IMAGE:1.0.7"  -o json | jq .manifests[0].digest | tr -d \") 
-    - COSIGN_EXPERIMENTAL=1 cosign sign -y --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE:$report_digest"
+    - COSIGN_EXPERIMENTAL=1 cosign sign -y --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE@$report_digest"
   after_script:
     - oras discover $CI_REGISTRY_IMAGE:1.0.7
   allow_failure: true
