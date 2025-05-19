@@ -107,3 +107,19 @@ We have two distinct cases of verification in this repo explained under `opa` fo
 The first one is about using a standalone instance of OPA to verify attestations, and some Rego policies accompanying it. This may - or may not - be suitable for CD cases.
 
 The second one - and of most interest - is about using OPA Gatekeeper as a K8s component for continious deployment cases, where conitnious verification is also required.
+
+## Self Hosting
+
+You can always run these pipelines using your own self-hosted GitLab runner. Try the following command to register a runner locally:
+```sh
+sudo gitlab-runner register \
+    --non-interactive \
+    --url https://gitlab.com/ \
+    --token token \
+    --run-untagged="true" \ 
+    --executor "docker+machine" \
+    --docker-image python:3.9
+sudo gitlab-runner run
+```
+
+Match the settings to your preferences and security policies.
