@@ -201,7 +201,8 @@ cosign-sign-container-image:
     - name: docker:24-dind
       alias: docker
   variables:
-      COSIGN_YES: "true"
+    DOCKER_TLS_CERTDIR: ""
+    COSIGN_YES: "true"
   id_tokens:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
@@ -245,7 +246,8 @@ trivy_sbom:
     - name: docker:24-dind
       alias: docker
   variables:
-      COSIGN_YES: "true"
+    DOCKER_TLS_CERTDIR: ""
+    COSIGN_YES: "true"
   id_tokens:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
@@ -398,7 +400,8 @@ oras-cosign-attest-sbom:
     - name: docker:24-dind
       alias: docker
   variables:
-      COSIGN_YES: "true"
+    DOCKER_TLS_CERTDIR: ""
+    COSIGN_YES: "true"
   id_tokens:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
