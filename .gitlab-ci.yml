@@ -207,7 +207,7 @@ cosign-sign-container-image:
       aud: sigstore
   before_script:
     - apk --no-cache add curl
-    - apk --no-cache add jq
+    # - apk --no-cache add jq
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
@@ -404,6 +404,7 @@ oras-cosign-attest-sbom:
       aud: sigstore
   before_script:
     - apk --no-cache add curl
+    - apk --no-cache add jq
     - | # install cosign
       curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
       mv cosign-linux-amd64 cosign
