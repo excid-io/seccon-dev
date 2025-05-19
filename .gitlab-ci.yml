@@ -148,23 +148,23 @@ kaniko-build:
       exists:
         - Dockerfile
 
-kaniko-build-unsigned:
-  stage: build_image
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  variables:
-    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-  script:
-    - /kaniko/executor
-      --context "${CI_PROJECT_DIR}"
-      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:unsigned"
-  allow_failure: true
-  rules:
-    - if: $CI_COMMIT_BRANCH
-      exists:
-        - Dockerfile
+# kaniko-build-unsigned:
+#   stage: build_image
+#   image:
+#     name: gcr.io/kaniko-project/executor:v1.23.2-debug
+#     entrypoint: [""]
+#   variables:
+#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+#   script:
+#     - /kaniko/executor
+#       --context "${CI_PROJECT_DIR}"
+#       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+#       --destination "${CI_REGISTRY_IMAGE}:unsigned"
+#   allow_failure: true
+#   rules:
+#     - if: $CI_COMMIT_BRANCH
+#       exists:
+#         - Dockerfile
 
 ################## container_signature ##################
 
