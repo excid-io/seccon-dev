@@ -404,17 +404,18 @@ oras-cosign-attest-sbom:
       aud: sigstore
   before_script:
     - apk --no-cache add curl
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - mv cosign /usr/local/bin
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - | 
+    - | # install cosign
+      curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+      mv cosign-linux-amd64 cosign
+      chmod +x cosign
+      mv cosign /usr/local/bin
+      echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - | # install oras
       VERSION="1.2.2"
       curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
       mkdir -p oras-install/
       tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
-      sudo mv oras-install/oras /usr/local/bin/
+      mv oras-install/oras /usr/local/bin/
       rm -rf oras_${VERSION}_*.tar.gz oras-install/
     - echo $CI_REGISTRY_PASSWORD | oras login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
