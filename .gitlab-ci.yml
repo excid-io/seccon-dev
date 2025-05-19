@@ -135,7 +135,7 @@ kaniko-build:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:1.0.6"
+      --destination "${CI_REGISTRY_IMAGE}:1.0.7"
       --image-name-with-digest-file tmp.hash
     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
   allow_failure: true
@@ -213,10 +213,10 @@ cosign-sign-container-image:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    # - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.6" # --registry-referrers-mode=oci-1-1 
-    - ./cosign sign "$CI_REGISTRY_IMAGE:1.0.6"  # COSIGN_EXPERIMENTAL=1  --registry-referrers-mode=oci-1-1
+    # - COSIGN_EXPERIMENTAL=1 ./cosign sign "$CI_REGISTRY_IMAGE:1.0.7" # --registry-referrers-mode=oci-1-1 
+    - ./cosign sign "$CI_REGISTRY_IMAGE:1.0.7"  # COSIGN_EXPERIMENTAL=1  --registry-referrers-mode=oci-1-1
   after_script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.6" --experimental-oci11=true --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --experimental-oci11=true --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
 
 ################## scan_image ##################
@@ -259,8 +259,8 @@ trivy_sbom:
     - apk --no-cache add python3 py3-pip
     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
   script:
-    - docker pull "$CI_REGISTRY_IMAGE:1.0.6"
-    - trivy image --format spdx-json -o image.sbom.json "$CI_REGISTRY_IMAGE:1.0.6"
+    - docker pull "$CI_REGISTRY_IMAGE:1.0.7"
+    - trivy image --format spdx-json -o image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
   allow_failure: true
   artifacts:
     when: always
@@ -336,9 +336,9 @@ trivy_sbom:
 #     - mv cosign /usr/local/bin
 #     - curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 #   script:
-#     - syft attest "$CI_REGISTRY_IMAGE:1.0.6" -o spdx-json > image.sbom.json
+#     - syft attest "$CI_REGISTRY_IMAGE:1.0.7" -o spdx-json > image.sbom.json
 #   after-script:
-#     - cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.6" --type 'https://spdx.dev/Document' --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.* | jq
+#     - cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type 'https://spdx.dev/Document' --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.* | jq
 #   artifacts:
 #     when: always
 #     paths:
@@ -363,10 +363,34 @@ trivy_sbom:
 #     - |
 #       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
 #       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.6"
+#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.7"
 #   allow_failure: true
 
-cosign-attest-sbom:
+# cosign-attest-sbom:
+#   stage: attestations
+#   needs: ["trivy_sbom"]
+#   image: docker:24
+#   services:
+#     - name: docker:24-dind
+#       alias: docker
+#   variables:
+#       COSIGN_YES: "true"
+#   id_tokens:
+#     SIGSTORE_ID_TOKEN:
+#       aud: sigstore
+#   before_script:
+#     - apk --no-cache add curl
+#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+#     - mv cosign-linux-amd64 cosign
+#     - chmod +x cosign
+#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+#   script:
+#     - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdx --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
+#   after_script:
+#     - ./cosign verify-attestation --type 'https://spdx.dev/Document' "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
+#   allow_failure: true
+
+oras-cosign-attest-sbom:
   stage: attestations
   needs: ["trivy_sbom"]
   image: docker:24
@@ -383,12 +407,24 @@ cosign-attest-sbom:
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
+    - mv cosign /usr/local/bin
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - | 
+      VERSION="1.2.2"
+      curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
+      mkdir -p oras-install/
+      tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
+      sudo mv oras-install/oras /usr/local/bin/
+      rm -rf oras_${VERSION}_*.tar.gz oras-install/
+    - echo $CI_REGISTRY_PASSWORD | oras login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type spdx --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.6"
+    - oras attach --artifact-type text/spdx+json "$CI_REGISTRY_IMAGE:1.0.7" image.sbom.json
+    - report_digest=$(oras discover "$CI_REGISTRY_IMAGE:1.0.7"  -o json | jq .manifests[0].digest | tr -d \") 
+    - COSIGN_EXPERIMENTAL=1 cosign sign -y --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE:$report_digest"
   after_script:
-    - ./cosign verify-attestation --type 'https://spdx.dev/Document' "$CI_REGISTRY_IMAGE:1.0.6" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
+    - oras discover $CI_REGISTRY_IMAGE:1.0.7
   allow_failure: true
+
 
 ################## deploy ##################
 

@@ -102,11 +102,13 @@ helm repo add ratify https://ratify-project.github.io/ratify
 # download the notary verification certificate
 curl -sSLO https://raw.githubusercontent.com/deislabs/ratify/main/test/testdata/notation.crt
 helm install ratify \
-    ratify/ratify --atomic \
-    --namespace gatekeeper-system \
-    --set-file notationCerts={./notation.crt} \
-    --set featureFlags.RATIFY_CERT_ROTATION=true \
-    --set policy.useRego=true
+  ratify/ratify --atomic \
+  --namespace gatekeeper-system \
+  --set sbom.enabled=true \
+  --set-file notationCerts={./notation.crt} \
+  --set featureFlags.RATIFY_CERT_ROTATION=true \
+  --set policy.useRego=true
+rm notation.crt
 ```
 In order to verify signatures produced by cosign in keyless mode, delete the default cosign verifier crd that comes with Ratify, and apply the `cosign-verifier.yaml` file found in the policies folder.
 ```sh
@@ -147,8 +149,8 @@ kubectl run demo3 --image=registry.gitlab.com/lefosg/excid-cicd-demo-project:uns
 
 Then, you can try applying Deployment files, like the ones found in `apps/base/default`.
 ```sh
-kubectl apply -f apps/base/default/unsigned-image.yaml  # pass
-kubectl apply -f apps/base/default/image.yaml  # fail
+kubectl apply -f apps/base/default/image.yaml  # pass
+kubectl apply -f apps/base/default/unsigned-image.yaml  # fail
 ```
 
 ## Manual verification with Ratify CLI
