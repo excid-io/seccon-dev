@@ -14,8 +14,8 @@ spec:
         - "registry.gitlab.com/lefosg/*"
       keyless:
         # ctLogVerify:  # OPTIONAL: [boolean] enables/disables certificate transparency log verification. default is 'true'
-        # certificateIdentity: 
-        certificateIdentityRegExp: "[A-Za-z0-9._-]+@excid.io"
+        certificateIdentity: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+        # certificateIdentityRegExp: "[A-Za-z0-9._-]+@excid.io"
         certificateOIDCIssuer: "https://token.actions.githubusercontent.com" 
         # certificateOIDCIssuerRegExp:
 ---
