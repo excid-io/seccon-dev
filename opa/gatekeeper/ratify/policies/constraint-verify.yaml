@@ -6,8 +6,8 @@ spec:
   enforcementAction: deny
   match:
     kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
+      # - apiGroups: [""]
+      #   kinds: ["Pod"]
       - apiGroups: ["apps"]
         kinds: ["Deployment"]
     namespaces: ["default"]

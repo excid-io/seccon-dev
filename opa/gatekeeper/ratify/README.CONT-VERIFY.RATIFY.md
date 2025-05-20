@@ -77,10 +77,12 @@ helm install ratify \
   --set policy.useRego=true
 rm notation.crt
 ```
-In order to verify signatures produced by cosign in keyless mode, delete the default cosign verifier crd that comes with Ratify, and apply the `cosign-verifier.yaml` file found in the policies folder.
+In order to verify signatures produced by cosign in keyless mode, delete the default cosign verifier crd that comes with Ratify, and apply the `cosign-verifier.yaml` file found in the policies folder. Similarly for SBOM validation, delete the existing SBOM verifier and replace it with our custom one.
 ```sh
 kubectl delete verifier verifier-cosign 
 kubectl apply -f opa/gatekeeper/ratify/policies/cosign-verifier.yaml 
+kubectl delete verifier verifier-sbom 
+kubectl apply -f opa/gatekeeper/ratify/policies/sbom-verifier.yaml 
 ```
 
 Create some test cases for deploying. Try one container which is not signed, and a signed one. 
