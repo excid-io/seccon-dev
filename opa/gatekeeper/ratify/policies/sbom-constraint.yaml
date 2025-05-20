@@ -1,0 +1,6 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: SBOMValidation
+metadata:
+  name: validate-sbom
+spec:
+  repository: "registry.gitlab.com/lefosg/excid-cicd-demo-project"
