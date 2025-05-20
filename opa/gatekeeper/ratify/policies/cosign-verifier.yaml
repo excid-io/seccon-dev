@@ -15,7 +15,7 @@ spec:
       keyless:
         # ctLogVerify:  # OPTIONAL: [boolean] enables/disables certificate transparency log verification. default is 'true'
         # certificateIdentity: 
-        certificateIdentityRegExp: "[A-Za-z0-9._-]+@excid.io"
+        certificateIdentityRegExp: "[A-Za-z0-9._-]+@exccid.io"
         certificateOIDCIssuer: "https://token.actions.githubusercontent.com" 
         # certificateOIDCIssuerRegExp:
 ---
