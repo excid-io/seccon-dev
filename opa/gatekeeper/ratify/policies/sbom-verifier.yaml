@@ -4,7 +4,7 @@ metadata:
   name: verifier-sbom
 spec:
   name: sbom
-  artifactTypes: text/spdx+json
+  artifactTypes: application/spdx+json
   parameters:
     disallowedPackages:
     - name: busybox
