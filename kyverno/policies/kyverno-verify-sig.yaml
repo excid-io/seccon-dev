@@ -1,3 +1,4 @@
+# Documentation: https://kyverno.io/docs/policy-types/cluster-policy/verify-images/sigstore/#keyless-signing-and-verification
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -16,12 +17,20 @@ spec:
       - imageReferences:
         - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
         failureAction: Enforce
-        attestors:
-        - entries:
-          - keyless:
-              subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
-              issuer: "https://gitlab.com"
-              # subjectRegExp: 
-              # issuerRegExp: 
-              rekor:
-                url: https://rekor.sigstore.dev
+        attestations:
+        - predicateType: https://cyclonedx.org/schema
+          attestors:
+          - entries:
+            - keyless:
+                subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+                issuer: "https://gitlab.com"
+                # subjectRegExp: 
+                # issuerRegExp: 
+                rekor:
+                  url: https://rekor.sigstore.dev
+          conditions:
+          - all:
+            - key: "{{ Data.bomFormat }}"
+              operator: Equals
+              value: CycloneDX
+
