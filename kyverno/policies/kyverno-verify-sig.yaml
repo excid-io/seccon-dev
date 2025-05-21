@@ -11,7 +11,7 @@ spec:
         any:
         - resources:
             kinds:
-              - Pod
+              - Deployment
       verifyImages:
       - imageReferences:
         - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
