@@ -1,0 +1,37 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-sbom-cyclonedx
+spec:
+  validationFailureAction: Audit
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: check-sbom
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      verifyImages:
+      - imageReferences:
+        - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
+        attestations:
+        - type: https://cyclonedx.org/bom
+          attestors:
+          - entries:
+            - keyless:
+                subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+                issuer: "https://gitlab.com"
+                # subjectRegExp: 
+                # issuerRegExp: 
+                # rekor:
+                #   url: https://rekor.sigstore.dev
+          conditions:
+          - all:
+            - key: "{{ subject[0].name }}"
+              operator: Equals
+              value: "registry.gitlab.com/lefosg/excid-cicd-demo-project"
+            - key: "{{ predicate.bomFormat }}"
+              operator: Equals
+              value: "CycloneDX"
+              

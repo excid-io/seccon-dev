@@ -17,19 +17,12 @@ spec:
       - imageReferences:
         - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
         failureAction: Enforce
-        attestations:
-        - type: https://cyclonedx.org/bom
-          attestors:
-          - entries:
-            - keyless:
-                subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
-                issuer: "https://gitlab.com"
-                # subjectRegExp: 
-                # issuerRegExp: 
-                rekor:
-                  url: https://rekor.sigstore.dev
-          conditions:
-          - all:
-            - key: "{{ Data.bomFormat }}"
-              operator: Equals
-              value: CycloneDX
+        attestors:
+        - entries:
+          - keyless:
+              subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+              issuer: "https://gitlab.com"
+              # subjectRegExp: 
+              # issuerRegExp: 
+              # rekor:
+              #   url: https://rekor.sigstore.dev
