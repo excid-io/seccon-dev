@@ -24,5 +24,5 @@ spec:
               issuer: "https://gitlab.com"
               # subjectRegExp: 
               # issuerRegExp: 
-              # rekor:
-              #   url: https://rekor.sigstore.dev
+              rekor:
+                url: https://rekor.sigstore.dev
