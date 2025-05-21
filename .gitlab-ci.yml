@@ -361,6 +361,7 @@ cosign-attest-provenance:
     - chmod +x cosign
     - pip install requests
     - apt-get update && apt-get install jq -y
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - |
       export IMG_HASH=$(cat img.hash)
