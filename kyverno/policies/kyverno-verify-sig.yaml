@@ -33,4 +33,3 @@ spec:
             - key: "{{ Data.bomFormat }}"
               operator: Equals
               value: CycloneDX
-
