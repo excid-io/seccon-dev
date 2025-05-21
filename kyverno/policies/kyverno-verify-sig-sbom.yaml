@@ -3,7 +3,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: verify-sig-sbom
+  name: verify-sig-sbom-slsa
 spec:
   validationFailureAction: Audit
   webhookTimeoutSeconds: 30
@@ -53,7 +53,7 @@ spec:
             - key: "{{ bomFormat }}"
               operator: Equals
               value: "CycloneDX"
-            - key: "{{ semver_compare( {{ components[name == 'express'].version | [0] }}, '>4.0.0') }}"
+            - key: "{{ semver_compare( {{ components[?name == 'express'].version | [0] }}, '>4.0.0') }}"
               operator: Equals
               value: true
     
