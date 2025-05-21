@@ -27,34 +27,34 @@ spec:
               # issuerRegExp: 
               rekor:
                 url: https://rekor.sigstore.dev          
-    - name: check-sbom
-      match:
-        any:
-        - resources:
-            kinds:
-              - Deployment
-      verifyImages:
-      - imageReferences:
-        - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
-        mutateDigest: false
-        attestations:
-        - type: https://cyclonedx.org/bom
-          attestors:
-          - entries:
-            - keyless:
-                subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
-                issuer: "https://gitlab.com"
-                # subjectRegExp: 
-                # issuerRegExp: 
-                rekor:
-                  url: https://rekor.sigstore.dev
-          conditions:
-          - all:
-            - key: "{{ bomFormat }}"
-              operator: Equals
-              value: "CycloneDX"
-            - key: "{{ semver_compare( {{ components[name == 'express'].version | [0] }}, '>4.0.0') }}"
-              operator: Equals
-              value: true
+    # - name: check-sbom
+    #   match:
+    #     any:
+    #     - resources:
+    #         kinds:
+    #           - Deployment
+    #   verifyImages:
+    #   - imageReferences:
+    #     - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
+    #     mutateDigest: false
+    #     attestations:
+    #     - type: https://cyclonedx.org/bom
+    #       attestors:
+    #       - entries:
+    #         - keyless:
+    #             subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+    #             issuer: "https://gitlab.com"
+    #             # subjectRegExp: 
+    #             # issuerRegExp: 
+    #             rekor:
+    #               url: https://rekor.sigstore.dev
+    #       conditions:
+    #       - all:
+    #         - key: "{{ bomFormat }}"
+    #           operator: Equals
+    #           value: "CycloneDX"
+    #         - key: "{{ semver_compare( {{ components[name == 'express'].version | [0] }}, '>4.0.0') }}"
+    #           operator: Equals
+    #           value: true
     
     
