@@ -53,8 +53,6 @@ spec:
             - key: "{{ bomFormat }}"
               operator: Equals
               value: "CycloneDX"
-            - key: "{{ semver_compare( {{ components[?name == 'express'].version | [0] }}, '>4.0.0') }}"
-              operator: Equals
-              value: true
-    
-    
+            - key: "{{ components[?name == 'express'].version | [0] }}"
+              operator: GreaterThanOrEquals
+              value: "4.0.0" 
