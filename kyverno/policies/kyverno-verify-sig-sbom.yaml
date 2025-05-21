@@ -8,6 +8,25 @@ spec:
   validationFailureAction: Audit
   webhookTimeoutSeconds: 30
   rules:
+    - name: verify-image-signature-keyless
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+      verifyImages:
+      - imageReferences:
+        - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
+        failureAction: Enforce
+        attestors:
+        - entries:
+          - keyless:
+              subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+              issuer: "https://gitlab.com"
+              # subjectRegExp: 
+              # issuerRegExp: 
+              rekor:
+                url: https://rekor.sigstore.dev          
     - name: check-sbom
       match:
         any:
@@ -37,4 +56,5 @@ spec:
             - key: "{{ semver_compare( {{ components[name == 'express'].version | [0] }}, '>4.0.0') }}"
               operator: Equals
               value: true
-              
+    
+    
