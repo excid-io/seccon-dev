@@ -14,7 +14,7 @@ spec:
         
         # Get data from Ratify
         remote_data := response {
-          log("Input received: ", input)
+          print("Input received: ", input)
           images := get_images(input.review.object)
           response := external_data({"provider": "ratify-provider", "keys": images})
         }
