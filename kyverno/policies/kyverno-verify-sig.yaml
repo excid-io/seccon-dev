@@ -18,7 +18,7 @@ spec:
         - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
         failureAction: Enforce
         attestations:
-        - predicateType: https://cyclonedx.org/schema
+        - type: https://cyclonedx.org/bom
           attestors:
           - entries:
             - keyless:
