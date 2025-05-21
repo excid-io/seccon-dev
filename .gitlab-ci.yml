@@ -349,18 +349,21 @@ trivy_sbom:
 cosign-attest-provenance:
   stage: attestations
   needs: ["kaniko-build"]
-  image: python:3.9
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
   variables:
-    COSIGN_YES: "true"
+      COSIGN_YES: "true"
   id_tokens:
     SIGSTORE_ID_TOKEN:
       aud: sigstore
   before_script:
+    - apk --no-cache add curl
+    - apk --no-cache add jq
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
-    - pip install requests
-    - apt-get update && apt-get install jq -y
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - |
