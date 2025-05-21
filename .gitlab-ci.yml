@@ -348,7 +348,7 @@ trivy_sbom:
   
 cosign-attest-provenance:
   stage: attestations
-  needs: ["build_image"]
+  needs: ["kaniko-build"]
   image: python:3.9
   variables:
     COSIGN_YES: "true"
