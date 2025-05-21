@@ -177,6 +177,8 @@ kubectl apply -f apps/base/default/image.yaml  # pass
 kubectl apply -f apps/base/default/unsigned-image.yaml  # fail
 ```
 
+**Note**: In this documentation page of Ratify (https://ratify.dev/docs/plugins/verifier/sbom/) there is a working way of producing an SBOM, attaching it to the container image - and also sign it - and lastly verify it using Ratify. However, GitLab OCI Registry does not support the denoted `application/spdx+json` media type and we cannot attach the SBOM to the image. Thus, currently it is not really possible to use this functionality of Ratify (see `ISSUES.md`, issue 1).
+
 ## Manual verification with Ratify CLI
 
 You can use Ratify CLI to verify the images too, for testing purposes, and emulate the Pod behavior locally. There are two json files in this directory:

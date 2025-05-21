@@ -31,7 +31,7 @@ minikube start
 For ease you can add an `alias kubectl='minikube kubectl --'` to run `kubectl` directly in the terminal.
 
 #### Helm
-[Helm](https://helm.sh/) is a Kubernetes package manager. We use it to install OPA Gatekeeper, specifically version 3.10 because this version is compatible with the cosign gatekeeper provider.
+[Helm](https://helm.sh/) is a Kubernetes package manager. We use it to install Kyverno.
 
 ```sh
 ### 2. Install helm
@@ -50,6 +50,24 @@ helm repo update
 helm install kyverno kyverno/kyverno -n kyverno --create-namespace  #check their website for HA installation
 ```
 
+Afterwards, we need to write a policy for each verification we want to run. We want to verify:
+1. container signature
+2. sbom attestation
+3. slsa provenance attestation
+
+For this reason, we write a .yaml file found under `kyverno/policies` that includes one policy for each of the aforementioned bullets.
+
+According to the documentation, we can have a policies that verify the image signature and attestations. This is done using the `verifyImages` option in the .yaml file. More specifically, one rule is for verifying the image signature alone (rule *verify-image-signature-keyless*). There we define under the `attestors` field that the verification should be done in a keyless way. 
+
+The next rule, verifies the SBOM. Under the `attestations` field we declare some `conditions`, **PLUS** the way we want to verify the attestation, that is, in a keyless way. Since attestations are signed in-toto statements, we want to:
+1. verify the signature
+2. verify some expectations found in the payload
+
+**Note**: Kyverno uses **JMESPath** as a JSON parser. All conditions are written using this parser's syntax.
+
+Last rule verifies the SLSA provenance attestation. Similarly to the SBOM attestation, we define how the attestation signature should be verified, plus some conditions.
+
+**If and only if** all policies evaluate to **true** - i.e., there are no false conditions or signatures that could not be verified - will a container image Deployment (or whatever else match is specified in the policy) be accepted in the cluster. 
 
 #### FluxCD
 [FluxCD](https://fluxcd.io/) is a Continious Deployment tool. When we make changes to OCI container images or their corresponding .yaml files in a git repo, these changes are automatically detected by Flux. It pulls the new changes and applies them to the cluster. The git repo is the source of truth. Whatever configuration exists in the git repo, is applied in the cluster.
@@ -84,9 +102,41 @@ What we need to properly configure FluxCD is the above kustomization (or kustomi
 
 Whenever a new tag is uploaded on the GitLab container registry, flux detects the new tag and applies it to the cluster (policy can vary according to organization needs). We manually build images with new tags through the `.gitlab-ci.yaml` pipeline and sign them.
 
-
-
 ### Test time
 
+Kyverno is running in its own namespace `kyverno` and we applied a .yaml as mentioned above, which contains a policy for each verification we want to run.
 
+In the `.gitlab-ci.yaml` file we create a signature and two attestations in the steps:
+- cosign-sign-container-image
+- cosign-attest-sbom
+- cosign-attest-provenance
 
+We will take things one by one, starting from the container image signature. The image is signed using `cosign sign`. A signature is uploaded on the OCI registry (the layer ending in .sig). This is also verified within the CI just to ensure it was done correctly. Using the keyless attestor of Kyverno, we declare that we want to perform keyless verification on the image referenced.
+```yaml
+- keyless:
+    subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+    issuer: "https://gitlab.com"
+  rekor:
+  url: https://rekor.sigstore.dev
+```
+
+Then for the SBOM attestation, we declare under the `attestations.conditions` field, what conditions must be met in order to accept this SBOM as valid. Here, our application (which is the `server.js` file in the root directory of the project) uses the express-js library. We want to make sure that the version being used is greater or equal than 4.0.0, say, because older versions have known vulnerabilities and exploits.
+```yaml
+conditions:
+- all:
+  - key: "{{ bomFormat }}"
+    operator: Equals
+    value: "CycloneDX"
+  - key: "{{ components[?name == 'express'].version | [0] }}"
+    operator: GreaterThanOrEquals
+    value: "4.0.0" 
+```
+
+Similarly for the SLSA provenance, we want to make sure that the image being deployed is exactly the one that was built by the GitLab runner.
+```yaml
+conditions:
+- all:
+  - key: "{{ predicate.buildDefinition.resolvedDependencies[0].uri }}"
+    operator: Equals
+    value: "https://gitlab.com/lefosg/excid-cicd-demo-project"
+```
