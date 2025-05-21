@@ -348,7 +348,7 @@ trivy_sbom:
   
 cosign-attest-provenance:
   stage: attestations
-  needs: ["trivy_sbom"]
+  needs: ["build_image"]
   image: python:3.9
   variables:
     COSIGN_YES: "true"
