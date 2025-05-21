@@ -102,6 +102,18 @@ helm delete ratify --namespace gatekeeper-system
 kubectl delete crd stores.config.ratify.deislabs.io verifiers.config.ratify.deislabs.io certificatestores.config.ratify.deislabs.io policies.config.ratify.deislabs.io
 ```
 
+To uninstall Gatekeeper run:
+```sh
+helm delete gatekeeper --namespace gatekeeper-system
+# Helm v3 will not cleanup Gatekeeper installed CRDs. Run the following to uninstall Gatekeeper CRDs:
+kubectl delete crd -l gatekeeper.sh/system=yes
+```
+
+The namespace `gatekeeper-system` will still exist after uninstalling both Ratify and Gatekeeper, so run:
+```sh
+kubectl delete ns gatekeeper-system
+```
+
 #### FluxCD
 [FluxCD](https://fluxcd.io/) is a Continious Deployment tool. When we make changes to OCI container images or their corresponding .yaml files in a git repo, these changes are automatically detected by Flux. It pulls the new changes and applies them to the cluster. The git repo is the source of truth. Whatever configuration exists in the git repo, is applied in the cluster.
 
