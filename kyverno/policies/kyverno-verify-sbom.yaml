@@ -1,3 +1,5 @@
+#Documentation: https://kyverno.io/policies/other/verify-sbom-cyclonedx/verify-sbom-cyclonedx/
+#Also check JMESPath, the json query tool that Kyverno uses https://release-1-8-0.kyverno.io/docs/writing-policies/jmespath/
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:

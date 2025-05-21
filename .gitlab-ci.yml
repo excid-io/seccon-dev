@@ -387,7 +387,7 @@ cosign-attest-sbom:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type cyclonedx --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type 'https://cyclonedx.org/bom' --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
   after_script:
     - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type cyclonedx "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
