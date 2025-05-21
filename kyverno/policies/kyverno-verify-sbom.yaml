@@ -15,7 +15,6 @@ spec:
             kinds:
               - Deployment
       verifyImages:
-      
       - imageReferences:
         - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
         mutateDigest: false
@@ -32,10 +31,10 @@ spec:
                   url: https://rekor.sigstore.dev
           conditions:
           - all:
-            - key: "{{ subject[0].name }}"
-              operator: Equals
-              value: "registry.gitlab.com/lefosg/excid-cicd-demo-project"
-            - key: "{{ predicate.bomFormat }}"
+            - key: "{{ bomFormat }}"
               operator: Equals
               value: "CycloneDX"
+            - key: "{{ semver_compare( {{ components[name == 'express'].version | [0] }}, '>4.0.0') }}"
+              operator: Equals
+              value: true
               
