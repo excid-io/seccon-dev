@@ -346,27 +346,29 @@ trivy_sbom:
 #     paths:
 #       - image.sbom.json
   
-# cosign-attest-provenance:
-#   stage: attestations
-#   needs: ["trivy_sbom"]
-#   image: python:3.9
-#   variables:
-#     COSIGN_YES: "true"
-#   id_tokens:
-#     SIGSTORE_ID_TOKEN:
-#       aud: sigstore
-#   before_script:
-#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#     - mv cosign-linux-amd64 cosign
-#     - chmod +x cosign
-#     - pip install requests
-#     - apt-get update && apt-get install jq -y
-#   script:
-#     - |
-#       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
-#       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.7"
-#   allow_failure: true
+cosign-attest-provenance:
+  stage: attestations
+  needs: ["trivy_sbom"]
+  image: python:3.9
+  variables:
+    COSIGN_YES: "true"
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  before_script:
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - mv cosign-linux-amd64 cosign
+    - chmod +x cosign
+    - pip install requests
+    - apt-get update && apt-get install jq -y
+  script:
+    - |
+      export IMG_HASH=$(cat img.hash)
+      jq --arg b64hash "$IMG_HASH" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest --type 'https://slsa.dev/provenance/v1' --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.7"
+  after_script:
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type "https://slsa.dev/provenance/v1" "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
+  allow_failure: true
 
 cosign-attest-sbom:
   stage: attestations
