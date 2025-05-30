@@ -1,5 +1,8 @@
 # Secure CI/CD using artifact attestations and container signatures w/ STaaS 
 
+## Acknowledgements
+The code provided in this repository has been created in the context of the SecCon project, which is supported and funded by [aerOS](https://aeros-project.eu). 
+
 ## Description
 
 A demo pipeline for demonstrating DevPrivSecOps methodology with GitLab CI. Our focus on this repo is mainly on container signatures and artifact attestations and how we use them with STaaS within a pipeline, but a more complete pipeline is built to demonstrate how these attestations could fit within any pipeline.
