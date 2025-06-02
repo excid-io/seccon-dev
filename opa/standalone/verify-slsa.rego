@@ -5,7 +5,7 @@ import future.keywords.if
 slsa_predicate := "https://slsa.dev/provenance/v1"
 
 approved_repos := [
-    "https://gitlab.com/excid-demo/excid-cicd-demo-project"
+    "https://gitlab.com/excid-io/excid-cicd-demo-project"
 ]
 approved_runners := [
     "https://gitlab.com/gitlab-org/gitlab-runner/-/blob/5c23fd8e/PROVENANCE.md"
@@ -19,9 +19,9 @@ default allow := false
 
 # Allow if the repository is in the approved_repos list and the predicateType matches
 allow if {
-	# get latest hash of GL repo
 
-	statement = json.unmarshal(base64.decode(input.dsseEnvelope.payload))
+	# get latest hash of GL repo
+	statement = json.unmarshal(base64.decode(input.payload))
 
 	predicateType = statement.predicateType
 	runner := statement.predicate.buildDefinition.buildType

@@ -4,14 +4,14 @@ import future.keywords.if
 
 sbom_predicate := "https://cyclonedx.org/bom"
 
-official_image = "ghcr.io/excid-io/attestations-test"
+official_image = "https://gitlab.com/excid-io/excid-cicd-demo-project:1.0.7"
 
 # Fail closed
 default allow := false
 
 # Allow if the repository is in the approved_repos list and the predicateType matches
 allow if {
-	statement = json.unmarshal(base64.decode(input.dsseEnvelope.payload))
+	statement = json.unmarshal(base64.decode(input.payload))
 
 	predicateType = statement.predicateType
 	container_image = statement.predicate.metadata.component.name

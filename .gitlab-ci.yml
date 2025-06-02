@@ -3,7 +3,7 @@ stages:
   # - sast
   # - sca
   - build_image
-  - container_signature
+  - sign_image
   - scan_image
   - attestations
   # - deploy
@@ -166,10 +166,10 @@ kaniko-build:
 #       exists:
 #         - Dockerfile
 
-################## container_signature ##################
+################## sign_image ##################
 
 # staas-sign-container-image:
-#   stage: container_signature
+#   stage: sign_image
 #   needs: ["kaniko-build"]
 #   image: python:3.9
 #   before_script:
@@ -194,7 +194,7 @@ kaniko-build:
 #       - img.hash.bundle
 
 cosign-sign-container-image:
-  stage: container_signature
+  stage: sign_image
   needs: ["kaniko-build"]
   image: docker:24
   services:
