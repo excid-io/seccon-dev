@@ -69,6 +69,10 @@ Last rule verifies the SLSA provenance attestation. Similarly to the SBOM attest
 
 **If and only if** all policies evaluate to **true** - i.e., there are no false conditions or signatures that could not be verified - will a container image Deployment (or whatever else match is specified in the policy) be accepted in the cluster. 
 
+To uninstall Kyverno run:
+```sh
+helm uninstall kyverno kyverno/kyverno -n kyverno
+```
 
 #### FluxCD
 [FluxCD](https://fluxcd.io/) is a continuous Deployment tool. When we make changes to OCI container images or their corresponding .yaml files in a git repo, these changes are automatically detected by Flux. It pulls the new changes and applies them to the cluster. The git repo is the source of truth. Whatever configuration exists in the git repo, is applied in the cluster.
