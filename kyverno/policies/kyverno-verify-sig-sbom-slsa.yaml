@@ -18,8 +18,7 @@ spec:
       verifyImages:
       - imageReferences:
         - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
-        failureAction: Audit
-        mutateDigest: false
+        failureAction: Enforce
         attestors:
         - entries:
           - keyless:
