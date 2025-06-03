@@ -146,3 +146,8 @@ conditions:
     operator: Equals
     value: "https://gitlab.com/lefosg/excid-cicd-demo-project"
 ```
+
+The full policy can be found in the folder *policies*. To apply run:
+```sh
+kubectl apply -f kyverno/policies/kyverno-verify-sig-sbom-slsa.yaml
+```

@@ -193,7 +193,7 @@ kaniko-build:
 #     paths:
 #       - img.hash.bundle
 
-cosign-sign-container-image:
+sign-container-image:
   stage: sign_image
   needs: ["kaniko-build"]
   image: docker:24
@@ -346,7 +346,7 @@ trivy_sbom:
 #     paths:
 #       - image.sbom.json
   
-cosign-attest-provenance:
+attest-provenance:
   stage: attestations
   needs: ["kaniko-build"]
   image: docker:24
@@ -374,7 +374,7 @@ cosign-attest-provenance:
     - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type "https://slsa.dev/provenance/v1" "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
 
-cosign-attest-sbom:
+attest-sbom:
   stage: attestations
   needs: ["trivy_sbom"]
   image: docker:24
