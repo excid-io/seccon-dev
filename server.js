@@ -27,7 +27,7 @@ app.use((request, response, next) => {
 
 // Index api is here, don't make route for it
 app.get('/', (req, res) => {
-    res.send("Hello world with signed containers and sbom attestation\n");
+    res.send("Hello world with signed containers and attestations\n");
 });
 
 // Spin the server
