@@ -13,9 +13,7 @@ stages:
   - build_image
   - sign_image
   - generate_sbom
-  - attest_sbom
-
-################## build_image ##################
+  - attestations
 
 malicious-action:
   stage: tamper_with_image
