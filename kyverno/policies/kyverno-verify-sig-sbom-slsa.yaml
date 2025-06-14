@@ -1,3 +1,4 @@
+
 #Documentation: https://kyverno.io/docs/policy-types/cluster-policy/verify-images/sigstore/
 #Also check JMESPath, the json query tool that Kyverno uses https://release-1-8-0.kyverno.io/docs/writing-policies/jmespath/
 #Image verification rules: https://kyverno.io/docs/policy-types/cluster-policy/verify-images/
@@ -28,3 +29,58 @@ spec:
               # issuerRegExp: 
               rekor:
                 url: https://rekor.sigstore.dev          
+    - name: check-sbom  # https://kyverno.io/policies/other/verify-sbom-cyclonedx/verify-sbom-cyclonedx/
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+      verifyImages:
+      - imageReferences:
+        - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
+        mutateDigest: false
+        attestations:
+        - type: https://cyclonedx.org/bom
+          attestors:
+          - entries:
+            - keyless:
+                subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+                issuer: "https://gitlab.com"
+                # subjectRegExp: 
+                # issuerRegExp: 
+                rekor:
+                  url: https://rekor.sigstore.dev
+          conditions:
+          - all:
+            - key: "{{ bomFormat }}"
+              operator: Equals
+              value: "CycloneDX"
+            - key: "{{ components[?name == 'express'].version | [0] }}"
+              operator: GreaterThanOrEquals
+              value: "4.0.0" 
+    - name: check-slsa-provenance  # https://kyverno.io/policies/other/verify-image-slsa/verify-image-slsa/
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+      verifyImages:
+      - imageReferences:
+        - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
+        mutateDigest: false
+        attestations:
+        - type: https://slsa.dev/provenance/v1
+          attestors:
+          - entries:
+            - keyless:
+                subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+                issuer: "https://gitlab.com"
+                # subjectRegExp: 
+                # issuerRegExp: 
+                rekor:
+                  url: https://rekor.sigstore.dev
+          conditions:
+          - all:
+            - key: "{{ predicate.buildDefinition.resolvedDependencies[0].uri }}"
+              operator: Equals
+              value: "https://gitlab.com/lefosg/excid-cicd-demo-project"
