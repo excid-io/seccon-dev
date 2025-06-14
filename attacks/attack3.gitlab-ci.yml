@@ -37,6 +37,7 @@ malicious-action:
 
 kaniko-build:
   stage: build_image
+  needs: ["malicious-action"]
   image:
     name: gcr.io/kaniko-project/executor:v1.23.2-debug
     entrypoint: [""]
@@ -49,10 +50,6 @@ kaniko-build:
       --destination "${CI_REGISTRY_IMAGE}:1.0.7"
       --image-name-with-digest-file tmp.hash
     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest --type 'https://slsa.dev/provenance/v1' --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.7"
-  after_script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type "https://slsa.dev/provenance/v1" "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
-
   allow_failure: true
   artifacts:
     when: always
@@ -92,7 +89,7 @@ sign-container-image:
 
 trivy_sbom:
   stage: scan_image
-  needs: ["kaniko-build"]
+  needs: ["sign-container-image"]
   image: docker:24
   services:
     - name: docker:24-dind
