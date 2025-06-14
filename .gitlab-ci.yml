@@ -61,5 +61,5 @@ malicious-action:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - crane delete "${CI_REGISTRY_IMAGE}:1.0.7"
-    - crane copy docker.io/library/alpine:latest "${CI_REGISTRY_IMAGE}:1.0.7"
+    - crane copy alpine:latest "${CI_REGISTRY_IMAGE}:1.0.7"
   allow_failure: true
