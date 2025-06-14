@@ -1,5 +1,11 @@
 {
     "yaml.schemas": {
-        "https://json.schemastore.org/yamllint.json": "file:///home/lef/Desktop/excid/aerOS/A3/excid-cicd-demo-project/kyverno/policies/kyverno-verify-sig-sbom-slsa.yaml"
+        "https://json.schemastore.org/yamllint.json": [
+            "file:///home/lef/Desktop/excid/aerOS/A3/excid-cicd-demo-project/kyverno/policies/kyverno-verify-sig-sbom-slsa.yaml",
+            "file:///home/lef/Desktop/excid/aerOS/A3/excid-cicd-demo-project/opa/gatekeeper/ratify/policies/ratify-constraint-verify.yaml",
+            "file:///home/lef/Desktop/excid/aerOS/A3/excid-cicd-demo-project/opa/gatekeeper/ratify/policies/ratify-cosign-verifier.yaml",
+            "file:///home/lef/Desktop/excid/aerOS/A3/excid-cicd-demo-project/opa/gatekeeper/ratify/policies/ratify-sbom-verifier.yaml",
+            "file:///home/lef/Desktop/excid/aerOS/A3/excid-cicd-demo-project/opa/gatekeeper/ratify/policies/ratify-template-verify-sig.yaml"
+        ]
     }
 }

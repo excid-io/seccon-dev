@@ -1,16 +1,13 @@
 ### Attack 3 showcase
 
 # 1. Continuous Integration viewpoint
-# In this pipeline, an image is built, and later we suppose that some untrusted entity tampers with it
-# For simplicity, we think of "tampers" as an action that replaces the original image with another one (something 
-# like crane copy excid-cicd-demo-project:1.0.7 alpine:latest)
-# This is supposed to be done sometime after CI finishes, but for simplicity, and for seeing things from the same
-# point of view, we embed the "malicious" action in the pipeline right after building the image
+# In this pipeline, an image is built using an unwanted dependency. Here, because this is an express-js project,
+# we define "unwanted" as "express-js version < 4". So during CI, an attacker manages to install express version 3.
 
 # 2. Continuous Deployment viewpoint
-# The same Kyverno policy applies for all attacks. We have authored a policy that expects the SBOM of image 
+# More or less, the same Kyverno policy applies for all attacks. We have authored a policy that expects the SBOM of image 
 # "registry.gitlab.../excid-cicd-demo-project:1.0.7" to be attested by the GitLab runner. The expectation regarding 
-# the SBOM contents states that "express-js version should be > 4".
+# the SBOM contents states that "express-js version should be > 4". Also, the image itself is signed and verified.
 stages:
   - tamper_with_image
   - build_image
@@ -88,7 +85,7 @@ sign-container-image:
   allow_failure: true
 
 trivy_sbom:
-  stage: scan_image
+  stage: generate_sbom
   needs: ["sign-container-image"]
   image: docker:24
   services:

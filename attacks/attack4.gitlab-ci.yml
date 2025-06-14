@@ -9,8 +9,8 @@
 
 # 2. Continuous Deployment viewpoint
 # More or less, the same Kyverno policy applies for all attacks. We have authored a policy that expects image 
-# "registry.gitlab.../excid-cicd-demo-project:1.0.7" to be signed by the GitLab runner. So no significant changes in the 
-# K8s infrastructure must be done
+# "registry.gitlab.../excid-cicd-demo-project:1.0.7" to be signed by the GitLab runner. 
+
 stages:
   - build_image
   - tamper_with_image

@@ -58,9 +58,3 @@ spec:
             - key: "{{ components[?name == 'express'].version | [0] }}"
               operator: GreaterThanOrEquals
               value: "4.0.0" 
-    - name: check-slsa-provenance  # https://kyverno.io/policies/other/verify-image-slsa/verify-image-slsa/
-      match:
-        any:
-        - resources:
-            kinds:
-              - Deployment
