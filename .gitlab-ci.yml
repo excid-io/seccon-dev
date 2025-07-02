@@ -183,13 +183,13 @@ staas-sign-container-image:
   script:
     - export COMMENT=container-signature
     - ./cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
-    - python3 staas/staas-sign.py -t $STAAS_API_KEY -a payload.json -c $COMMENT
+    - python3 staas-sign.py -t $STAAS_API_KEY -a payload.json -c $COMMENT -v
     - cat payload.json | jq
     - cat payload.json.bundle | jq
     - jq -r '.base64Signature' ./payload.json.bundle > img.sig
     - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature img.sig --payload ./img.hash.bundle
   after_script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain staas/ca.pem #--insecure-ignore-sct
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem #--insecure-ignore-sct
   allow_failure: true
   artifacts:
     when: always
