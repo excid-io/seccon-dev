@@ -1,3 +1,5 @@
+# This version of the pipeline uses cosign tool instead of STaaS
+
 stages:
   # - secret_scanning
   # - sast
