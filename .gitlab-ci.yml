@@ -180,6 +180,7 @@ staas-sign-container-image:
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
     - pip install requests
+    - echo $CI_REGISTRY_PASSWORD | ./cosign login -u $CI_REGISTRY_USER --password-stdin=true
   script:
     - export COMMENT=container-signature
     - ./cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
