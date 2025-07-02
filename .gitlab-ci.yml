@@ -172,7 +172,7 @@ stages:
 
 staas-sign-container-image:
   stage: sign_image
-  needs: ["kaniko-build"]
+  # needs: ["kaniko-build"]
   image: python:3.9
   before_script:
     - apt-get update && apt-get install jq -y
