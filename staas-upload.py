@@ -3,8 +3,8 @@ import base64
 import requests
 import sys
 
-FILENAME = sys.argv[1]  # File path for the first argument
-API_TOKEN = sys.argv[2]  # Authorization token for the second argument
+API_TOKEN = sys.argv[1]  # Authorization token for the second argument
+FILENAME = sys.argv[2]  # File path for the first argument
 COMMENT = sys.argv[3]  # Comment
  
 with open(FILENAME,"rb") as f:
