@@ -126,29 +126,29 @@ stages:
 #       exists:
 #         - Dockerfile
 
-kaniko-build:
-  stage: build_image
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  variables:
-    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-  script:
-    - /kaniko/executor
-      --context "${CI_PROJECT_DIR}"
-      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:1.0.7"
-      --image-name-with-digest-file tmp.hash
-    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - img.hash
-  rules:
-    - if: $CI_COMMIT_BRANCH
-      exists:
-        - Dockerfile
+# kaniko-build:
+#   stage: build_image
+#   image:
+#     name: gcr.io/kaniko-project/executor:v1.23.2-debug
+#     entrypoint: [""]
+#   variables:
+#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+#   script:
+#     - /kaniko/executor
+#       --context "${CI_PROJECT_DIR}"
+#       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+#       --destination "${CI_REGISTRY_IMAGE}:1.0.7"
+#       --image-name-with-digest-file tmp.hash
+#     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#       - img.hash
+#   rules:
+#     - if: $CI_COMMIT_BRANCH
+#       exists:
+#         - Dockerfile
 
 # kaniko-build-unsigned:
 #   stage: build_image
@@ -182,7 +182,7 @@ staas-sign-container-image:
     - pip install requests
   script:
     - export COMMENT=container-signature
-    - cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
+    - ./cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
     - python3 staas/staas-sign.py -t $STAAS_API_TOKEN -a payload.json -c $COMMENT
     - cat payload.json | jq
     - cat payload.json.bundle | jq
