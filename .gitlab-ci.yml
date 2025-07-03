@@ -5,7 +5,7 @@ stages:
   # - sast
   # - sca
   - build_image
-  # - sign_image
+  - sign_image
   - scan_image
   - attestations
   # - deploy
@@ -140,7 +140,7 @@ kaniko-build:
 # If this is your case, use the next job which uses the docker image
 staas-sign-container-image:
   stage: sign_image
-  # needs: ["kaniko-build"]
+  needs: ["kaniko-build"]
   image: python:3.9
   before_script:
     - apt-get update && apt-get install jq -y
