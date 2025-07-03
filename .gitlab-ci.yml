@@ -293,29 +293,30 @@ trivy_sbom:
 
 ################## attestation ##################
 
-# staas-provenance:
-#   stage: attestations
-#   needs: ["kaniko-build"]
-#   image: python:3.9
-#   before_script:
-#     - apt-get update && apt-get install jq -y
-#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#     - mv cosign-linux-amd64 cosign
-#     - chmod +x cosign
-#     - pip install requests
-#   script: # image.prov.json is an in-toto statment, a provenance document about the container image
-#     - |
-#       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
-#       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-#     - export COMMENT=provenance
-#     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
-#   after_script:
-#     - ./cosign verify-blob --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - image.prov.json.bundle
+staas-provenance:
+  stage: attestations
+  needs: ["kaniko-build"]
+  image: python:3.9
+  before_script:
+    - apt-get update && apt-get install jq -y
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - mv cosign-linux-amd64 cosign
+    - chmod +x cosign
+    - pip install requests
+  script: # image.prov.json is an in-toto statment, a provenance document about the container image
+    - cat artifacts-metadata.json
+    - |
+      export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
+      jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
+    - export COMMENT=provenance
+    - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
+  after_script:
+    - ./cosign verify-blob --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - image.prov.json.bundle
 
 staas-sbom:
   stage: attestations
