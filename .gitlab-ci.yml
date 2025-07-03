@@ -4,7 +4,7 @@ stages:
   # - secret_scanning
   # - sast
   # - sca
-  # - build_image
+  - build_image
   # - sign_image
   - scan_image
   - attestations
@@ -126,29 +126,29 @@ stages:
 #       exists:
 #         - Dockerfile
 
-# kaniko-build:
-#   stage: build_image
-#   image:
-#     name: gcr.io/kaniko-project/executor:v1.23.2-debug
-#     entrypoint: [""]
-#   variables:
-#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-#   script:
-#     - /kaniko/executor
-#       --context "${CI_PROJECT_DIR}"
-#       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-#       --destination "${CI_REGISTRY_IMAGE}:1.0.7"
-#       --image-name-with-digest-file tmp.hash
-#     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - img.hash
-#   rules:
-#     - if: $CI_COMMIT_BRANCH
-#       exists:
-#         - Dockerfile
+kaniko-build:
+  stage: build_image
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  variables:
+    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:1.0.7"
+      --image-name-with-digest-file tmp.hash
+    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - img.hash
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      exists:
+        - Dockerfile
 
 # kaniko-build-unsigned:
 #   stage: build_image
@@ -261,7 +261,7 @@ stages:
 
 trivy_sbom:
   stage: scan_image
-  # needs: ["kaniko-build"]
+  needs: ["kaniko-build"]
   image: docker:24
   services:
     - name: docker:24-dind
