@@ -298,20 +298,16 @@ staas-sbom:
     # for sbom attestation: 1. generate sbom 2. make in-toto statement 3. hash & sign 4. craft dsse envelope
     # 1 was done in trivy-sbom job
     # 2. craft in-toto statement
-    - ls
-    - cat img.hash
-    - cat staas/intoto-schema.json
-
     - python3 craft-intoto.py -f staas/intoto-schema.json -n $CI_REGISTRY_IMAGE -d $(cat img.hash) -s image.sbom.json  # outputs sbom-intoto.json
     - cat sbom-intoto.json | jq
     # 3. sign w/ staas
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
-    - python3 staas-sign.py -t $STAAS_API_KEY -a sbom-intoto.json -c $COMMENT -o sbom-intoto.json.bundle -v  
-    - cat sbom-intoto.json.bundle | jq
+    - python3 staas-sign.py -t $STAAS_API_KEY -a sbom-intoto.json -c $COMMENT -o sbom-intoto.json.bundle -v
     # 4. craft dsse envelope and attach
-    - jq -r '.base64Signature' ./sbom-intoto.json.bundle > img.sig
-    
-    - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./ "$CI_REGISTRY_IMAGE:1.0.7" 
+    - cat sbom-intoto.json | base64 > sbom-intoto.json.b64
+    - jq -r '.base64Signature' ./sbom-intoto.json.bundle | base64 > img.sig.b64
+    - python3 craft_dsse.py -f staas/dsse-schema.json -s ./img.sig.b64 -p ./sbom-intoto.json.b64 --sbom  # outputs sbom.att
+    - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./sbom.att "$CI_REGISTRY_IMAGE:1.0.7" 
   # after_script:
     # - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
   allow_failure: true

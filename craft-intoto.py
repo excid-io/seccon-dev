@@ -42,4 +42,4 @@ intoto_data['subject'][0]['digest']['sha256'] = imageHash
 with open('sbom-intoto.json', 'w') as updated_file:
     json.dump(intoto_data, updated_file, indent=4)
 
-print("Done")
+print("Created in-toto statement: sbom-intoto.json")
