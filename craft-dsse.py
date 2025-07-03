@@ -50,7 +50,6 @@ with open(signatureFile, 'r') as signature_file:
 dsse_data['signatures'][0]['sig'] = signature_data
 dsse_data['signatures'][0]['keyid'] = ""
 
-print(dsse_data)
 # Write the updated data to a new file
 outputFile = 'sbom.att' if args.sbom else 'slsa-prov.att'
 with open(outputFile, 'w') as updated_file:
