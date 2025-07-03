@@ -4,7 +4,7 @@ stages:
   # - secret_scanning
   # - sast
   # - sca
-  # - build_image
+  - build_image
   # - sign_image
   # - scan_image
   - attestations
