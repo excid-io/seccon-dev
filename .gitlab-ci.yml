@@ -306,7 +306,7 @@ staas-sbom:
     # 4. craft dsse envelope and attach
     - cat sbom-intoto.json | base64 > sbom-intoto.json.b64
     - jq -r '.base64Signature' ./sbom-intoto.json.bundle | base64 > img.sig.b64
-    - python3 craft_dsse.py -f staas/dsse-schema.json -s ./img.sig.b64 -p ./sbom-intoto.json.b64 --sbom  # outputs sbom.att
+    - python3 craft-dsse.py -f staas/dsse-schema.json -s ./img.sig.b64 -p ./sbom-intoto.json.b64 --sbom  # outputs sbom.att
     - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./sbom.att "$CI_REGISTRY_IMAGE:1.0.7" 
   # after_script:
     # - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
