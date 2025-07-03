@@ -25,7 +25,7 @@ if not (args.provenance ^ args.sbom):  # XOR operation
     parser.error("Exactly one of --slsa-provenance or --sbom must be provided.")
 
 media_type_slsa = "application/vnd.in-toto.provenance+dsse"
-media_type_sbom = "application/vnd.in-toto.spdx+dsse"
+media_type_sbom = "application/vnd.in-toto+json"
 
 schemaFile = args.file
 payloadFile = args.payload
