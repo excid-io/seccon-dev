@@ -1,0 +1,11 @@
+{
+    "_type": "https://in-toto.io/Statement/v0.1",
+    "predicateType": "https://cyclonedx.org/bom | https://slsa.dev/provenance/v1",
+    "subject": [ {
+        "name": "$CI_REGISTRY_IMAGE",
+        "digest": {
+            "sha256": "123abc..."
+        }
+    }],
+    "predicate": "sbom.json | provenance.json"
+}
