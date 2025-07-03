@@ -170,17 +170,59 @@ stages:
 
 ################## sign_image ##################
 
-staas-sign-container-image:
+# staas-sign-container-image:
+#   stage: sign_image
+#   # needs: ["kaniko-build"]
+#   image: python:3.9
+#   before_script:
+#     - apt-get update && apt-get install jq -y
+#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+#     - mv cosign-linux-amd64 cosign
+#     - chmod +x cosign
+#     - pip install requests
+#     - echo $CI_REGISTRY_PASSWORD | ./cosign login registry.gitlab.com -u $CI_REGISTRY_USER --password-stdin=true 
+#   script:
+#     - export COMMENT=container-signature-pipeline-$CI_PIPELINE_URL
+#     - ./cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
+#     - python3 staas-sign.py -t $STAAS_API_KEY -a payload.json -c $COMMENT -o payload.json.bundle -v
+#     - cat payload.json | jq
+#     - cat payload.json.bundle | jq
+#     - jq -r '.base64Signature' ./payload.json.bundle > img.sig
+#     - jq -r '.cert' ./payload.json.bundle | base64 -d > cert.pem
+#     - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature ./img.sig --payload ./payload.json --certificate-chain ./staas/ca.pem --certificate ./cert.pem  
+#   after_script:
+#     - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#       - payload.json.bundle
+
+
+sign-container-image:
   stage: sign_image
   # needs: ["kaniko-build"]
-  image: python:3.9
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - apt-get update && apt-get install jq -y
+    # add binaries
+    - apk --no-cache add curl
+    - apk --no-cache add jq
+    # add cosign
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
-    - pip install requests
-    - echo $CI_REGISTRY_PASSWORD | ./cosign login registry.gitlab.com -u $CI_REGISTRY_USER --password-stdin=true 
+    # add python & dependencies
+    - apk add python3
+    - curl -O https://bootstrap.pypa.io/get-pip.py    
+    - python3 get-pip.py --break-system-packages
+    - pip install requests --break-system-packages
+    # login to oci registry
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - export COMMENT=container-signature-pipeline-$CI_PIPELINE_URL
     - ./cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
