@@ -299,10 +299,9 @@ staas-sbom:
     # 1 was done in trivy-sbom job
     # 2. craft in-toto statement
     - python3 craft-intoto.py -f staas/intoto-schema.json -n $CI_REGISTRY_IMAGE -d $(cat img.hash) -s image.sbom.json  # outputs sbom-intoto.json
-    - cat sbom-intoto.json | jq
     # 3. sign w/ staas
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
-    - python3 staas-sign.py -t $STAAS_API_KEY -a sbom-intoto.json -c $COMMENT -o sbom-intoto.json.bundle -v
+    - python3 staas-sign.py -t $STAAS_API_KEY -a sbom-intoto.json -c $COMMENT -o sbom-intoto.json.bundle # do not enable -v here, output will explode the logs
     # 4. craft dsse envelope and attach
     - cat sbom-intoto.json | base64 > sbom-intoto.json.b64
     - jq -r '.base64Signature' ./sbom-intoto.json.bundle | base64 > img.sig.b64
