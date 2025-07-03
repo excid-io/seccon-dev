@@ -286,7 +286,7 @@ trivy_sbom:
 
 staas-sbom:
   stage: attestations
-  needs: ["trivy_sbom", "kaniko_build"]
+  needs: ["trivy_sbom", "kaniko-build"]
   image: python:3.9
   before_script:
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
