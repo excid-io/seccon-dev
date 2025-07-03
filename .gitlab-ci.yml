@@ -5,9 +5,9 @@ stages:
   # - sast
   # - sca
   - build_image
-  # - sign_image
+  - sign_image
   # - scan_image
-  - attestations
+  # - attestations
   # - deploy
   # - dast_zap
 
