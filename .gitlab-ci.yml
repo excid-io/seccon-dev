@@ -148,7 +148,7 @@ kaniko-build:
 #     - mv cosign-linux-amd64 cosign
 #     - chmod +x cosign
 #     - pip install requests
-#     - echo $CI_REGISTRY_PASSWORD | ./cosign login registry.gitlab.com -u $CI_REGISTRY_USER --password-stdin=true 
+#     - echo $CI_REGISTRY_PASSWORD | ./cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
 #   script:
 #     - export COMMENT=container-signature-$CI_PIPELINE_URL
 #     - ./cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
@@ -294,6 +294,7 @@ staas-sbom:
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
     - pip install requests
+    - echo $CI_REGISTRY_PASSWORD | ./cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
   script:
     # for sbom attestation: 1. generate sbom 2. make in-toto statement 3. hash & sign 4. craft dsse envelope
     # 1 was done in trivy-sbom job
