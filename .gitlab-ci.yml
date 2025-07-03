@@ -92,40 +92,6 @@ stages:
 
 ################## build_image ##################
 
-# There is no "real" difference between the two build jobs. 
-# Kaniko is a more secure way of building images in the GitLab CI case (instead of DinD)
-# docker-build:
-#   stage: build_image
-#   # needs: ["retire"]
-#   image: docker:24.0.5
-#   services:
-#     - docker:24.0.5-dind
-#   variables:
-#     DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
-#     SECURE_FILES_DOWNLOAD_PATH: './'
-#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-#     DOCKER_TLS_CERTDIR: "/certs"
-#   before_script:
-#     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-#     - apk update && apk add curl
-#   script:
-#     - docker build --iidfile img.hash -t "$DOCKER_IMAGE_NAME" .
-#     - docker push "$DOCKER_IMAGE_NAME"
-#     - |
-#       if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-#         docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
-#         docker push "$CI_REGISTRY_IMAGE:latest"
-#       fi 
-#   artifacts:
-#     when: always
-#     paths:
-#       - img.hash
-#   allow_failure: true
-#   rules:
-#     - if: $CI_COMMIT_BRANCH
-#       exists:
-#         - Dockerfile
-
 kaniko-build:
   stage: build_image
   image:
@@ -200,7 +166,7 @@ kaniko-build:
 #     paths:
 #       - payload.json.bundle
 
-# sign-container-image:
+# staas-sign-container-image:
 #   stage: sign_image
 #   needs: ["kaniko-build"]
 #   image: docker:24
@@ -322,6 +288,7 @@ staas-sbom:
   stage: attestations
   needs: ["trivy_sbom"]
   image: python:3.9
+  dependencies: ["kaniko_build"]
   before_script:
     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
     - mv cosign-linux-amd64 cosign
