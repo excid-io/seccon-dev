@@ -302,7 +302,7 @@ staas-sbom:
     - cat img.hash
     - cat staas/intoto-schema.json
 
-    - python3 craft-intoto.py -f staas/intoto-schema.json -n $CI_REGISTRY_IMAGE -d $(echo img.hash) -s image.sbom.json  # outputs sbom-intoto.json
+    - python3 craft-intoto.py -f staas/intoto-schema.json -n $CI_REGISTRY_IMAGE -d $(cat img.hash) -s image.sbom.json  # outputs sbom-intoto.json
     - cat sbom-intoto.json | jq
     # 3. sign w/ staas
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
