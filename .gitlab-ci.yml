@@ -299,7 +299,7 @@ staas-sbom:
     # 2. craft in-toto statement
     - ls
     - cat img.hash
-    - cat stass/intoto-schema.json
+    - cat staas/intoto-schema.json
 
     - python3 craft-intoto.py -f staas/intoto-schema.json -n $CI_REGISTRY_IMAGE -d $(echo img.hash) -s image.sbom.json  # outputs sbom-intoto.json
     - cat sbom-intoto.json | jq
