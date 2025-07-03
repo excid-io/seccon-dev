@@ -293,30 +293,30 @@ trivy_sbom:
 
 ################## attestation ##################
 
-staas-provenance:
-  stage: attestations
-  needs: ["kaniko-build"]
-  image: python:3.9
-  before_script:
-    - apt-get update && apt-get install jq -y
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - pip install requests
-  script: # image.prov.json is an in-toto statment, a provenance document about the container image
-    - cat artifacts-metadata.json
-    - |
-      export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
-      jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-    - export COMMENT=provenance
-    - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
-  after_script:
-    - ./cosign verify-blob --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - image.prov.json.bundle
+# staas-provenance:
+#   stage: attestations
+#   needs: ["kaniko-build"]
+#   image: python:3.9
+#   before_script:
+#     - apt-get update && apt-get install jq -y
+#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+#     - mv cosign-linux-amd64 cosign
+#     - chmod +x cosign
+#     - pip install requests
+#   script: # image.prov.json is an in-toto statment, a provenance document about the container image
+#     - cat artifacts-metadata.json
+#     - |
+#       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
+#       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
+#     - export COMMENT=provenance
+#     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
+#   after_script:
+#     - ./cosign verify-blob --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#       - image.prov.json.bundle
 
 staas-sbom:
   stage: attestations
@@ -331,149 +331,26 @@ staas-sbom:
     # for sbom attestation: 1. generate sbom 2. make in-toto statement 3. hash & sign 4. craft dsse envelope
     # 1 was done in trivy-sbom job
     # 2. craft in-toto statement
-    - cat artifacts-metadata.json
+    - ls
+    - cat img.hash
     - cat stass/intoto-schema.json
-    - cp staas/intoto-schema.json sbom-intoto.json
-    #set predicateType
-    - jq '.predicateType = "https://cyclonedx.org/bom"' sbom-intoto.json
-    #set subject details (name + digest)
-    - echo $CI_REGISTRY_IMAGE
-    - jq --arg digest "123456abcdef..." --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$digest}}]' sbom-intoto.json
-    # 3. hash & sign
+
+    - python3 craft-intoto.py -f staas/intoto-schema.json -n $CI_REGISTRY_IMAGE -d 987569876 -s image.sbom.json  # outputs sbom-intoto.json
+    - cat sbom-intoto.json
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
-    - python3 staas-sign.py -t $STAAS_API_KEY -a payload.json -c $COMMENT -o payload.json.bundle -v
+    - python3 staas-sign.py -t $STAAS_API_KEY -a payload.json -c $COMMENT -o payload.json.bundle -v  
     - cat payload.json | jq
     - cat payload.json.bundle | jq
     - jq -r '.base64Signature' ./payload.json.bundle > img.sig
     - jq -r '.cert' ./payload.json.bundle | base64 -d > cert.pem
     - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature ./img.sig --payload ./payload.json --certificate-chain ./staas/ca.pem --certificate ./cert.pem  
-  after_script:
+  # after_script:
     # - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
   allow_failure: true
   artifacts:
     when: always
     paths:
       - image.sbom.json.bundle
-
-# Can also use syft to generate and attest the SBOM (instead of trivy, use whichever you prefer)
-# syft-attest-sbom:
-#   stage: scan_image
-#   needs: ["kaniko-build"]
-#   image: docker:24
-#   services:
-#     - name: docker:24-dind
-#       alias: docker
-#   variables:
-#       COSIGN_YES: "true"
-#   id_tokens:
-#     SIGSTORE_ID_TOKEN:
-#       aud: sigstore
-#   before_script:
-#     - apk --no-cache add curl
-#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY  
-#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#     - mv cosign-linux-amd64 cosign
-#     - chmod +x cosign
-#     - mv cosign /usr/local/bin
-#     - curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-#   script:
-#     - syft attest "$CI_REGISTRY_IMAGE:1.0.7" -o spdx-json > image.sbom.json
-#   after-script:
-#     - cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type 'https://spdx.dev/Document' --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.* | jq
-#   artifacts:
-#     when: always
-#     paths:
-#       - image.sbom.json
-  
-# attest-provenance:
-#   stage: attestations
-#   needs: ["kaniko-build"]
-#   image: docker:24
-#   services:
-#     - name: docker:24-dind
-#       alias: docker
-#   variables:
-#       COSIGN_YES: "true"
-#   id_tokens:
-#     SIGSTORE_ID_TOKEN:
-#       aud: sigstore
-#   before_script:
-#     - apk --no-cache add curl
-#     - apk --no-cache add jq
-#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#     - mv cosign-linux-amd64 cosign
-#     - chmod +x cosign
-#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-#   script:
-#     - |
-#       export IMG_HASH=$(cat img.hash)
-#       jq --arg b64hash "$IMG_HASH" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-#     - COSIGN_EXPERIMENTAL=1 ./cosign attest --type 'https://slsa.dev/provenance/v1' --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.7"
-#   after_script:
-#     - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type "https://slsa.dev/provenance/v1" "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
-#   allow_failure: true
-
-attest-sbom:
-  stage: attestations
-  needs: ["trivy_sbom"]
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  variables:
-      COSIGN_YES: "true"
-  id_tokens:
-    SIGSTORE_ID_TOKEN:
-      aud: sigstore
-  before_script:
-    - apk --no-cache add curl
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type 'https://cyclonedx.org/bom' --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
-  after_script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type cyclonedx "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
-  allow_failure: true
-
-# oras-cosign-attest-sbom:
-#   stage: attestations
-#   needs: ["trivy_sbom"]
-#   image: docker:24
-#   services:
-#     - name: docker:24-dind
-#       alias: docker
-#   variables:
-#     DOCKER_TLS_CERTDIR: ""
-#     COSIGN_YES: "true"
-#   id_tokens:
-#     SIGSTORE_ID_TOKEN:
-#       aud: sigstore
-#   before_script:
-#     - apk --no-cache add curl
-#     - apk --no-cache add jq
-#     - | # install cosign
-#       curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#       mv cosign-linux-amd64 cosign
-#       chmod +x cosign
-#       mv cosign /usr/local/bin
-#       echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-#     - | # install oras
-#       VERSION="1.2.2"
-#       curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
-#       mkdir -p oras-install/
-#       tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
-#       mv oras-install/oras /usr/local/bin/
-#       rm -rf oras_${VERSION}_*.tar.gz oras-install/
-#     - echo $CI_REGISTRY_PASSWORD | oras login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-#   script:
-#     - oras attach --artifact-type text/spdx+json "$CI_REGISTRY_IMAGE:1.0.7" image.sbom.json
-#     - report_digest=$(oras discover "$CI_REGISTRY_IMAGE:1.0.7"  -o json | jq .manifests[0].digest | tr -d \") 
-#     - COSIGN_EXPERIMENTAL=1 cosign sign -y --registry-referrers-mode=oci-1-1 "$CI_REGISTRY_IMAGE@$report_digest"
-#   after_script:
-#     - oras discover $CI_REGISTRY_IMAGE:1.0.7
-#   allow_failure: true
 
 
 ################## deploy ##################
