@@ -40,9 +40,9 @@ if args.verbose:
 response = requests.request("POST", url + "Api/Sign", headers=headers, data=payload)
 if args.verbose:
     print(response.text)
-
-print("Signed artifact " + FILENAME)
 print("Response code: " + str(response.status_code))
 
+print("Signed artifact " + FILENAME)
 with open(args.output, "w") as text_file:
     text_file.write(response.text)
+print("Wrote bundle to " + args.output)
