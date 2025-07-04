@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser(description="Create in-toto JSON statement for 
 parser.add_argument('-f','--file', type=str, metavar='', required=True, default='intoto-schema.json', help='File to modify (schema file)')
 parser.add_argument('-p', '--payload', type=str, metavar='', required=True, help='Path to base64 encoded in-toto statement of SBOM or SLSA provenance file')
 parser.add_argument('-s', '--signature', type=str, metavar='', required=True, help='Path to base64 encoded signature')
+parser.add_argument('-o', '--output-file', type=str, metavar='', dest="output", required=False, help='Path to base64 encoded signature')
 
 # media_type_group = parser.add_mutually_exclusive_group()
 # media_type_group.add_argument("--slsa-provenance", dest="provenance", action="store_true", help="DSSE envelope must include the SLSA provenance media type")
@@ -21,6 +22,8 @@ parser.add_argument('-s', '--signature', type=str, metavar='', required=True, he
 
 args = parser.parse_args()
 
+if not args.output:
+    args.output = "out.att"
 # if not (args.provenance ^ args.sbom):  # XOR operation
 #     parser.error("Exactly one of --slsa-provenance or --sbom must be provided.")
 
@@ -54,8 +57,7 @@ dsse_data['signatures'][0]['sig'] = signature_data
 dsse_data['signatures'][0]['keyid'] = ""
 
 # Write the updated data to a new file
-outputFile = 'sbom.att' if args.sbom else 'slsa-prov.att'
-with open(outputFile, 'w') as updated_file:
+with open(args.output_file, 'w') as updated_file:
     json.dump(dsse_data, updated_file, indent=4)
 
-print("Created dsse envelope: " + outputFile)
+print("Created dsse envelope: " + args.output_file)
