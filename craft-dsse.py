@@ -21,8 +21,8 @@ parser.add_argument('-s', '--signature', type=str, metavar='', required=True, he
 
 args = parser.parse_args()
 
-if not (args.provenance ^ args.sbom):  # XOR operation
-    parser.error("Exactly one of --slsa-provenance or --sbom must be provided.")
+# if not (args.provenance ^ args.sbom):  # XOR operation
+#     parser.error("Exactly one of --slsa-provenance or --sbom must be provided.")
 
 # media_type_slsa = "application/vnd.in-toto.provenance+dsse"
 # media_type_sbom = "application/vnd.in-toto+json"
