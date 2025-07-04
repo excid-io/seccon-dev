@@ -28,6 +28,7 @@ spec:
               # subjectRegExp: 
               # issuerRegExp: 
               rekor:
+                ignoreTlog: true
                 url: https://rekor.sigstore.dev          
     - name: check-sbom  # https://kyverno.io/policies/other/verify-sbom-cyclonedx/verify-sbom-cyclonedx/
       match:
@@ -49,6 +50,7 @@ spec:
                 # subjectRegExp: 
                 # issuerRegExp: 
                 rekor:
+                  ignoreTlog: true
                   url: https://rekor.sigstore.dev
           conditions:
           - all:
@@ -78,7 +80,10 @@ spec:
                 # subjectRegExp: 
                 # issuerRegExp: 
                 rekor:
+                  ignoreTlog: true
                   url: https://rekor.sigstore.dev
+                ctlog:
+                  ignoreSCT: true
           conditions:
           - all:
             - key: "{{ predicate.buildDefinition.resolvedDependencies[0].uri }}"
