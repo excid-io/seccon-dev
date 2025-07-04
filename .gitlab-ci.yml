@@ -303,8 +303,8 @@ staas-provenance:
     - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
     - python3 staas-sign.py -t $STAAS_API_KEY -a slsa-prov-intoto.json -c $COMMENT -o slsa-prov-intoto.json.bundle -v
     # 4. craft dsse envelope and attach
-    - cat slsa-prov-intoto.json | base64 > slsa-prov-intoto.json.b64
-    - jq -r '.base64Signature' ./slsa-prov-intoto.json.bundle > img.sig.b64
+    - cat slsa-prov-intoto.json | base64 | tr -d '\n' > slsa-prov-intoto.json.b64
+    - jq -r '.base64Signature' ./slsa-prov-intoto.json.bundle | tr -d '\n' > img.sig.b64
     - python3 craft-dsse.py -f staas/dsse-schema.json -s ./img.sig.b64 -p ./slsa-prov-intoto.json.b64 -o slsa-prov.att # outputs slsa-prov.att
     - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./slsa-prov.att "$CI_REGISTRY_IMAGE:1.0.7" 
   after_script:
@@ -338,8 +338,8 @@ staas-sbom:
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
     - python3 staas-sign.py -t $STAAS_API_KEY -a sbom-intoto.json -c $COMMENT -o sbom-intoto.json.bundle # do not enable -v here, output will explode the logs, sbom is huge
     # 4. craft dsse envelope and attach
-    - cat sbom-intoto.json | base64 > sbom-intoto.json.b64
-    - jq -r '.base64Signature' ./sbom-intoto.json.bundle > img.sig.b64
+    - cat sbom-intoto.json | base64 | tr -d '\n' > sbom-intoto.json.b64
+    - jq -r '.base64Signature' ./sbom-intoto.json.bundle | tr -d '\n' > img.sig.b64
     - python3 craft-dsse.py -f staas/dsse-schema.json -s ./img.sig.b64 -p ./sbom-intoto.json.b64 -o sbom.att # outputs sbom.att
     - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./sbom.att "$CI_REGISTRY_IMAGE:1.0.7" 
   after_script:
