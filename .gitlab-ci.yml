@@ -298,9 +298,7 @@ staas-provenance:
     # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash & sign 4. craft dsse envelope
     # 1 and 2 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the slsa in-toto statement
     # still, we need to modify the subject field to contain the correct data (image name and digest)
-    - cat artifacts-metadata.json
     - jq --arg imgname "$CI_REGISTRY_IMAGE" --arg digest "$(cat img.hash)" '.subject = [{"name":$imgname, "digest":{"sha256":$digest}}]' artifacts-metadata.json > slsa-prov-intoto.json
-    - cat slsa-prov-intoto.json
     # 3. sign w/ staas
     - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
     - python3 staas-sign.py -t $STAAS_API_KEY -a slsa-prov-intoto.json -c $COMMENT -o slsa-prov-intoto.json.bundle -v
@@ -310,6 +308,7 @@ staas-provenance:
     - python3 craft-dsse.py -f staas/dsse-schema.json -s ./img.sig.b64 -p ./slsa-prov-intoto.json.b64 --slsa-provenance  # outputs slsa-prov.att
     - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./slsa-prov.att "$CI_REGISTRY_IMAGE:1.0.7" 
     - jq -r '.cert' ./slsa-prov-intoto.json.bundle | base64 -d > cert.pem
+    - cat cert.pem
   after_script:
     - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --certificate==./cert.pem --insecure-ignore-sct
     # - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
