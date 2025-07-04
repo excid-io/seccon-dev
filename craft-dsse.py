@@ -57,7 +57,7 @@ dsse_data['signatures'][0]['sig'] = signature_data
 dsse_data['signatures'][0]['keyid'] = ""
 
 # Write the updated data to a new file
-with open(args.output_file, 'w') as updated_file:
+with open(args.output, 'w') as updated_file:
     json.dump(dsse_data, updated_file, indent=4)
 
-print("Created dsse envelope: " + args.output_file)
+print("Created dsse envelope: " + args.output)
