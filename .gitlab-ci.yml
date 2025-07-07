@@ -136,7 +136,7 @@ kaniko-build:
 
 ################## sign_image ##################
 
-# In some cases, `cosign login` may not work (depends on the permissions of the tokens)
+# In some cases, `cosign login` may not work (depends on the permissions of the tokens etc)
 # If this is your case, use the next job which uses the docker image
 staas-sign-container-image:
   stage: sign_image
@@ -148,18 +148,17 @@ staas-sign-container-image:
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
     - pip install requests
+    - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - echo $CI_REGISTRY_PASSWORD | ./cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
   script:
     - export COMMENT=container-signature-$CI_PIPELINE_URL
     - ./cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
     - python3 staas-sign.py -t $STAAS_API_KEY -a payload.json -c $COMMENT -o payload.json.bundle -v
-    - cat payload.json | jq
-    - cat payload.json.bundle | jq
     - jq -r '.base64Signature' ./payload.json.bundle > img.sig
     - jq -r '.cert' ./payload.json.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature ./img.sig --payload ./payload.json --certificate-chain ./staas/ca.pem --certificate ./cert.pem  
+    - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature ./img.sig --payload ./payload.json --certificate-chain ./staas-ca.pem --certificate ./cert.pem  
   after_script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
   allow_failure: true
   artifacts:
     when: always
@@ -188,6 +187,7 @@ staas-sign-container-image:
 #     - curl -O https://bootstrap.pypa.io/get-pip.py    
 #     - python3 get-pip.py --break-system-packages
 #     - pip install requests --break-system-packages
+#     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
 #     # login to oci registry
 #     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
 #   script:
@@ -198,9 +198,9 @@ staas-sign-container-image:
 #     - cat payload.json.bundle | jq
 #     - jq -r '.base64Signature' ./payload.json.bundle > img.sig
 #     - jq -r '.cert' ./payload.json.bundle | base64 -d > cert.pem
-#     - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature ./img.sig --payload ./payload.json --certificate-chain ./staas/ca.pem --certificate ./cert.pem  
+#     - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature ./img.sig --payload ./payload.json --certificate-chain ./staas-ca.pem --certificate ./cert.pem  
 #   after_script:
-#     - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
+#     - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
 #   allow_failure: true
 #   artifacts:
 #     when: always
@@ -258,31 +258,6 @@ trivy_sbom:
 
 ################## attestation ##################
 
-# staas-provenance:
-#   stage: attestations
-#   needs: ["kaniko-build"]
-#   image: python:3.9
-#   before_script:
-#     - apt-get update && apt-get install jq -y
-#     - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#     - mv cosign-linux-amd64 cosign
-#     - chmod +x cosign
-#     - pip install requests
-#   script: # image.prov.json is an in-toto statment, a provenance document about the container image
-#     - cat artifacts-metadata.json
-#     - |
-#       export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
-#       jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-#     - export COMMENT=provenance
-#     - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
-#   after_script:
-#     - ./cosign verify-blob --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - image.prov.json.bundle
-
 staas-provenance:
   stage: attestations
   needs: ["kaniko-build"]
@@ -293,6 +268,7 @@ staas-provenance:
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
     - pip install requests
+    - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - echo $CI_REGISTRY_PASSWORD | ./cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
   script:
     # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash & sign 4. craft dsse envelope
@@ -309,8 +285,7 @@ staas-provenance:
     - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./slsa-prov.att "$CI_REGISTRY_IMAGE:1.0.7" 
   after_script:
     - jq -r '.cert' ./slsa-prov-intoto.json.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --certificate ./cert.pem --insecure-ignore-sct
-    # - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct
   allow_failure: true
   artifacts:
     when: always
@@ -328,6 +303,7 @@ staas-sbom:
     - mv cosign-linux-amd64 cosign
     - chmod +x cosign
     - pip install requests
+    - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - echo $CI_REGISTRY_PASSWORD | ./cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
   script:
     # for sbom attestation: 1. generate sbom 2. make in-toto statement 3. hash & sign 4. craft dsse envelope
@@ -344,8 +320,7 @@ staas-sbom:
     - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./sbom.att "$CI_REGISTRY_IMAGE:1.0.7" 
   after_script:
     - jq -r '.cert' ./sbom-intoto.json.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --certificate ./cert.pem --insecure-ignore-sct
-    # - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas/ca.pem --insecure-ignore-sct
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct
   allow_failure: true
   artifacts:
     when: always
