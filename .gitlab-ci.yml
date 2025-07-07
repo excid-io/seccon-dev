@@ -302,7 +302,8 @@ attest-provenance:
     - |
       export IMG_HASH=$(cat img.hash)
       jq --arg b64hash "$IMG_HASH" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest --type 'https://slsa.dev/provenance/v1' --predicate image.prov.json "$CI_REGISTRY_IMAGE:1.0.7"
+    - jq -r '.predicate' ./image.prov.json > prov-predicate.json
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest --type 'https://slsa.dev/provenance/v1' --predicate prov-predicate.json "$CI_REGISTRY_IMAGE:1.0.7"
   after_script:
     - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type "https://slsa.dev/provenance/v1" "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
   allow_failure: true
