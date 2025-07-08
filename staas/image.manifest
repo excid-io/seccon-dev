@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "config": {
+    "mediaType": "application/vnd.oci.image.config.v1+json",
+    "size": 7353,
+    "digest": "sha256:0a53791ce57d0a325011a8e5a53b235e2a735eeac8517385582b4dd08db5e4df"
+  },
+  "layers": [
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 48494284,
+      "digest": "sha256:c1995213564325caf7e52ecd95fe4435c70b03eb94c674ac15706733986b86e0"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 24020692,
+      "digest": "sha256:7bbf972c6c2f5b7313ae3cb74e63888ab70931bcd9aefd960f9a38c540dbf2ca"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 64399879,
+      "digest": "sha256:900e2c02f17f686733f4f957ddfb07b3342d1957d87b56254634d4fbb2abb81d"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 211373500,
+      "digest": "sha256:abe9c1abe6f3b8ca9fc6abe710405f830f95262f1d356e8f6545d823b5840a5c"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 3323,
+      "digest": "sha256:d182267dedc0bcedfaa42eaa949bf58298e24bba3d1112b8e10db3f7677c75b0"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 58520226,
+      "digest": "sha256:3ad9708544df078d3536b4ed2aa13fcfad9971d45333c870b121cb4130e59bf5"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 1250675,
+      "digest": "sha256:3bf56d408aed4f9f545e8a4b3616b421b88ba05f57a7bc97c3c6d57eaade7381"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 446,
+      "digest": "sha256:18df67cf2e7176746a8066f3abdc328ebe2fe944b9067dc417d919b307aedb90"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 235,
+      "digest": "sha256:db6f4c0df0f3bdd3a059d3289f73ff366272c8eaac99e7091384a90bdb92d9bf"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 38701,
+      "digest": "sha256:37557de39f8030fe9f1fa479ec0af1268a8f8491e0db2586d165b3b67bd67494"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 12204540,
+      "digest": "sha256:5cbeb1fbbec4dc51241c54bc81c159f47e6c9d5f3ca640d8a87293b4f2c45b99"
+    },
+    {
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "size": 851,
+      "digest": "sha256:bab674684fbb7bd2003f69ce63ab966f21d0773cc4ebc52b83f10223b79c31f7"
+    }
+  ],
+  "annotations": {
+    "com.docker.official-images.bashbrew.arch": "amd64",
+    "org.opencontainers.image.base.digest": "sha256:5087fab2ef6c533f8d81403f4b6362c60a25e2291d35be871b010ad6cddac24b",
+    "org.opencontainers.image.base.name": "buildpack-deps:bookworm",
+    "org.opencontainers.image.created": "2025-07-02T21:10:14Z",
+    "org.opencontainers.image.revision": "d78e8df65f94f391ba1adf67f7ef1e2596ac92f1",
+    "org.opencontainers.image.source": "https://github.com/nodejs/docker-node.git#d78e8df65f94f391ba1adf67f7ef1e2596ac92f1:24/bookworm",
+    "org.opencontainers.image.url": "https://hub.docker.com/_/node",
+    "org.opencontainers.image.version": "24"
+  }
+}
