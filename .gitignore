@@ -4,6 +4,9 @@
 detect_gitleaks_dir.json
 staas/*.att
 staas/*.sig
+staas/cosign*
+staas/staas*
+staas/*.manifest
 
 ### certificates ###
 *.pem

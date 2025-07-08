@@ -157,6 +157,7 @@ staas-sign-container-image:
     - jq -r '.base64Signature' ./payload.json.bundle > img.sig
     - jq -r '.cert' ./payload.json.bundle | base64 -d > cert.pem
     - jq -r '.rekorBundle' ./payload.json.bundle > rekor.bundle
+    - cat rekor.bundle
     - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature ./img.sig --payload ./payload.json --certificate-chain ./staas-ca.pem --certificate ./cert.pem --rekor-response ./rekor.bundle
   after_script:
     - COSIGN_EXPERIMENTAL=1 ./cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
