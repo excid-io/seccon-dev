@@ -299,9 +299,9 @@ attest-provenance:
     - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - |
-      export IMG_HASH=$(cat img.hash)
-      jq --arg b64hash "$IMG_HASH" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
+    # - |
+    #   export IMG_HASH=$(cat img.hash)
+    #   jq --arg b64hash "$IMG_HASH" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
     - jq -r '.predicate' ./image.prov.json > prov-predicate.json
     - COSIGN_EXPERIMENTAL=1 ./cosign attest --type 'https://slsa.dev/provenance/v1' --predicate prov-predicate.json "$CI_REGISTRY_IMAGE:1.0.7"
   after_script:

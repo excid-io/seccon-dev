@@ -29,7 +29,8 @@ spec:
               # issuerRegExp: 
               rekor:
                 ignoreTlog: true
-                url: https://rekor.sigstore.dev          
+                url: https://rekor.sigstore.dev      
+              
     - name: check-sbom  # https://kyverno.io/policies/other/verify-sbom-cyclonedx/verify-sbom-cyclonedx/
       match:
         any:
