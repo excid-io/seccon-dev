@@ -144,9 +144,9 @@ staas-sign-container-image:
   image: python:3.9
   before_script:
     - apt-get update && apt-get install jq -y
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 /usr/local/cosign
-    - chmod +x cosign
+    # - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    # - mv cosign-linux-amd64 /usr/local/cosign
+    # - chmod +x cosign
     - pip install requests
     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - echo $CI_REGISTRY_PASSWORD | ./cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
