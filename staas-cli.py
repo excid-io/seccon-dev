@@ -74,7 +74,6 @@ def sign_image(image, token, comment, bundle_output_file, verbose):
     os.remove(cert_file)
     os.remove(rekor_file)
     os.remove(ca_file)
-    os.remove(bundle_output_file)
 
 def sign_blob(artifact, token, comment, output, verbose):
 
@@ -134,8 +133,8 @@ def download_cosign():
         print(f'Error downloading file: {e}')
     try: 
         os.system("ls -la")
-        os.system("mv cosign /usr/local/cosign")
-        os.chmod("/usr/local/cosign", 0o755)
+        os.system("mv cosign /usr/bin/cosign")
+        os.chmod("/usr/bin/cosign", 0o755)
         print("Cosign installed")
     except Exception as e:
         print(f'Error moving and changing file permissions: {e}')
