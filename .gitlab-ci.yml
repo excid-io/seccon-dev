@@ -272,7 +272,7 @@ staas-provenance:
   after_script:
     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - jq -r '.cert' ./slsa.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --verbose --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true
   allow_failure: true
   artifacts:
     when: always
@@ -304,12 +304,12 @@ staas-sbom:
   after_script:
     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - jq -r '.cert' ./sbom.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --verbose --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true --insecure-ignore-tlog=true
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true --insecure-ignore-tlog=true
   allow_failure: true
   artifacts:
     when: always
     paths:
-      - sbom-intoto.json.bundle
+      - sbom.bundle
 
 ################## deploy ##################
 
