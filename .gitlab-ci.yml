@@ -92,29 +92,29 @@ stages:
 
 ################## build_image ##################
 
-kaniko-build:
-  stage: build_image
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  variables:
-    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-  script:
-    - /kaniko/executor
-      --context "${CI_PROJECT_DIR}"
-      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:1.0.7"
-      --image-name-with-digest-file tmp.hash
-    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - img.hash
-  rules:
-    - if: $CI_COMMIT_BRANCH
-      exists:
-        - Dockerfile
+# kaniko-build:
+#   stage: build_image
+#   image:
+#     name: gcr.io/kaniko-project/executor:v1.23.2-debug
+#     entrypoint: [""]
+#   variables:
+#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+#   script:
+#     - /kaniko/executor
+#       --context "${CI_PROJECT_DIR}"
+#       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+#       --destination "${CI_REGISTRY_IMAGE}:1.0.7"
+#       --image-name-with-digest-file tmp.hash
+#     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#       - img.hash
+#   rules:
+#     - if: $CI_COMMIT_BRANCH
+#       exists:
+#         - Dockerfile
 
 # kaniko-build-unsigned:
 #   stage: build_image
@@ -169,7 +169,7 @@ kaniko-build:
 
 staas-sign-container-image:
   stage: sign_image
-  needs: ["kaniko-build"]
+  # needs: ["kaniko-build"]
   image: docker:24
   services:
     - name: docker:24-dind
@@ -214,7 +214,7 @@ staas-sign-container-image:
 
 trivy_sbom:
   stage: scan_image
-  needs: ["kaniko-build"]
+  # needs: ["kaniko-build"]
   image: docker:24
   services:
     - name: docker:24-dind
@@ -247,7 +247,7 @@ trivy_sbom:
 
 staas-provenance:
   stage: attestations
-  needs: ["kaniko-build"]
+  # needs: ["kaniko-build"]
   image: docker:24
   services:
     - name: docker:24-dind
@@ -264,15 +264,10 @@ staas-provenance:
     # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
     # 1 and 2 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the slsa in-toto statement
     # we make some adjustments to fit the staas-cli tool
-    - jq -r '.predicate' ./artifacts-metadata.json > predicate.json
+    - jq -r '.predicate' ./artifacts-metadata.json > slsa-predicate.json
     # 3. the rest is done using staas-cli
     - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
-    - |
-      python3 staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY \
-      --predicate ./predicate.json 
-      --predicate-type "https://slsa.dev/provenance/v1" 
-      --comment $COMMENT 
-      --output-bundle "slsa.bundle"
+    - python3 staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate ./slsa-predicate.json --predicate-type "https://slsa.dev/provenance/v1" --comment $COMMENT --output-bundle "slsa.bundle"
     # 4. craft dsse envelope and attach
   after_script:
     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
@@ -287,7 +282,7 @@ staas-provenance:
 
 staas-sbom:
   stage: attestations
-  needs: ["trivy_sbom", "kaniko-build"]
+  needs: ["trivy_sbom"] # , "kaniko-build"
   image: docker:24
   services:
     - name: docker:24-dind
@@ -305,12 +300,7 @@ staas-sbom:
     # 1 was done in trivy-sbom job
     # 2 and 3 are done by staas-cli
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
-    - |
-      python3 staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY \
-      --predicate ./image.sbom.json 
-      --predicate-type "https://cyclonedx.org/bom" 
-      --comment $COMMENT 
-      --output-bundle "sbom.bundle"
+    - python3 staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate ./image.sbom.json --predicate-type "https://cyclonedx.org/bom" --comment $COMMENT --output-bundle "sbom.bundle"
   after_script:
     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - jq -r '.cert' ./sbom.bundle | base64 -d > cert.pem
