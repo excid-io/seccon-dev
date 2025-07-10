@@ -136,30 +136,27 @@ kaniko-build:
 
 ################## sign_image ##################
 
-# In some cases, `cosign login` may not work (depends on the permissions of the tokens etc)
-# If this is your case, use the next job which uses the docker image
+# This job uses a docker image, and installs runtime dependencies. There is also a premade image (see next job)
 # staas-sign-container-image:
 #   stage: sign_image
 #   needs: ["kaniko-build"]
-#   image: python:3.9
+#   image: docker:24
+#   services:
+#     - name: docker:24-dind
+#       alias: docker
+#   variables:
+#     DOCKER_TLS_CERTDIR: ""
 #   before_script:
-#     - apt-get update && apt-get install jq -y
-#     # - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-#     # - mv cosign-linux-amd64 /usr/local/cosign
-#     # - chmod +x cosign
-#     - pip install requests
-#     # - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
-#     - echo $CI_REGISTRY_PASSWORD | cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
+#     # add binaries
+#     - apk --no-cache add curl jq python3 py3-pip cosign
+#     - pip3 install requests --break-system-packages
+#     # login to oci registry
+#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
 #   script:
 #     - export COMMENT=container-signature-$CI_PIPELINE_URL
-#     # - ./cosign generate "$CI_REGISTRY_IMAGE:1.0.7" > payload.json
-#     # - python3 staas-sign.py -t $STAAS_API_KEY -a payload.json -c $COMMENT -o payload.json.bundle -v
-#     # - jq -r '.base64Signature' ./payload.json.bundle > img.sig
-#     # - jq -r '.cert' ./payload.json.bundle | base64 -d > cert.pem
-#     # - jq -r '.rekorBundle' ./payload.json.bundle > rekor.bundle
-#     # - COSIGN_EXPERIMENTAL=1 ./cosign attach signature "$CI_REGISTRY_IMAGE:1.0.7" --signature ./img.sig --payload ./payload.json --certificate-chain ./staas-ca.pem --certificate ./cert.pem --rekor-response ./rekor.bundle
-#     - python3 staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT $CI_REGISTRY_IMAGE:1.0.7
+#     - python3 staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
 #   after_script:
+#     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
 #     - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
 #   allow_failure: true
 #   artifacts:
@@ -170,21 +167,12 @@ kaniko-build:
 staas-sign-container-image:
   stage: sign_image
   needs: ["kaniko-build"]
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  variables:
-    DOCKER_TLS_CERTDIR: ""
+  image: pull ghcr.io/excid-io/staas-cli:latest
   before_script:
-    # add binaries
-    - apk --no-cache add curl jq python3 py3-pip cosign
-    - pip3 install requests --break-system-packages
-    # login to oci registry
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - export COMMENT=container-signature-$CI_PIPELINE_URL
-    - python3 staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
+    - ./staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
   after_script:
     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
@@ -278,7 +266,6 @@ staas-provenance:
     when: always
     paths:
       - slsa.bundle
-
 
 staas-sbom:
   stage: attestations
