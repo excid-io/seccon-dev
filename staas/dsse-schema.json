@@ -1,7 +1,0 @@
-{
-  "payload": "<Base64(SERIALIZED_BODY)>",
-  "payloadType": "<PAYLOAD_TYPE>",
-  "signatures": [{
-    "sig": "<Base64(SIGNATURE)>"
-  }]
-}
