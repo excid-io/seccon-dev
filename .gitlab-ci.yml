@@ -178,18 +178,8 @@ staas-sign-container-image:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     # add binaries
-    - apk --no-cache add curl
-    - apk --no-cache add jq
-    # add cosign
-    # - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    # - mv cosign-linux-amd64 cosign
-    # - chmod +x cosign
-    # add python & dependencies
-    - apk add python3
-    - curl -O https://bootstrap.pypa.io/get-pip.py    
-    - python3 get-pip.py --break-system-packages
-    - pip install requests --break-system-packages
-    # - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
+    - apk --no-cache add curl jq python3 py3-pip cosign
+    - pip3 install requests --break-system-packages
     # login to oci registry
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
