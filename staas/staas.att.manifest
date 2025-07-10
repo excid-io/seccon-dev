@@ -14,14 +14,6 @@
       "annotations": {
         "dev.cosignproject.cosign/signature": ""
       }
-    },
-    {
-      "mediaType": "application/vnd.dsse.envelope.v1+json",
-      "size": 2770984,
-      "digest": "sha256:050c7085641fcea68e68be4081688929e9eff284e035c2b271c976b35cd3983b",
-      "annotations": {
-        "dev.cosignproject.cosign/signature": ""
-      }
     }
   ]
 }

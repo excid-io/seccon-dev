@@ -137,42 +137,24 @@ kaniko-build:
 ################## sign_image ##################
 
 # This job uses a docker image, and installs runtime dependencies. There is also a premade image (see next job)
-# staas-sign-container-image:
-#   stage: sign_image
-#   needs: ["kaniko-build"]
-#   image: docker:24
-#   services:
-#     - name: docker:24-dind
-#       alias: docker
-#   variables:
-#     DOCKER_TLS_CERTDIR: ""
-#   before_script:
-#     # add binaries
-#     - apk --no-cache add curl jq python3 py3-pip cosign
-#     - pip3 install requests --break-system-packages
-#     # login to oci registry
-#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-#   script:
-#     - export COMMENT=container-signature-$CI_PIPELINE_URL
-#     - python3 staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
-#   after_script:
-#     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
-#     - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - payload.json.bundle
-
 staas-sign-container-image:
   stage: sign_image
   needs: ["kaniko-build"]
-  image: ghcr.io/excid-io/staas-cli:latest
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   before_script:
+    # add binaries
+    - apk --no-cache add curl jq python3 py3-pip cosign
+    - pip3 install requests --break-system-packages
+    # login to gitlab registry
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - export COMMENT=container-signature-$CI_PIPELINE_URL
-    - ./staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
+    - python3 staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
   after_script:
     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
@@ -181,6 +163,24 @@ staas-sign-container-image:
     when: always
     paths:
       - payload.json.bundle
+
+# staas-sign-container-image:
+#   stage: sign_image
+#   needs: ["kaniko-build"]
+#   image: ghcr.io/excid-io/staas-cli:latest
+#   before_script:
+#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+#   script:
+#     - export COMMENT=container-signature-$CI_PIPELINE_URL
+#     - ./staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
+#   after_script:
+#     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
+#     - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#       - payload.json.bundle
 
 ################## scan_image ##################
 
@@ -246,7 +246,7 @@ staas-provenance:
     # add binaries
     - apk --no-cache add curl jq python3 py3-pip cosign
     - pip3 install requests --break-system-packages
-    # login to oci registry
+    # login to gitlab registry
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
@@ -280,7 +280,7 @@ staas-sbom:
     # add binaries
     - apk --no-cache add curl jq python3 py3-pip cosign
     - pip3 install requests --break-system-packages
-    # login to oci registry
+    # login to gitlab registry
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
