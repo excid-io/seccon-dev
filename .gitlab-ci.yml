@@ -248,65 +248,72 @@ trivy_sbom:
 staas-provenance:
   stage: attestations
   needs: ["kaniko-build"]
-  image: python:3.9
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - apt-get update && apt-get install jq -y
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - pip install requests
-    - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
-    - echo $CI_REGISTRY_PASSWORD | ./cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
+    # add binaries
+    - apk --no-cache add curl jq python3 py3-pip cosign
+    - pip3 install requests --break-system-packages
+    # login to oci registry
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash & sign 4. craft dsse envelope
+    # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
     # 1 and 2 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the slsa in-toto statement
-    # still, we need to modify the subject field to contain the correct data (image name and digest)
-    - jq --arg imgname "$CI_REGISTRY_IMAGE" --arg digest "$(cat img.hash)" '.subject = [{"name":$imgname, "digest":{"sha256":$digest}}]' artifacts-metadata.json > slsa-prov-intoto.json
-    # 3. sign w/ staas
+    # we make some adjustments to fit the staas-cli tool
+    - jq -r '.predicate' ./artifacts-metadata.json > predicate.json
+    # 3. the rest is done using staas-cli
     - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
-    - python3 staas-sign.py -t $STAAS_API_KEY -a slsa-prov-intoto.json -c $COMMENT -o slsa-prov-intoto.json.bundle -v
+    - |
+      python3 staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY \
+      --predicate ./predicate.json 
+      --predicate-type "https://slsa.dev/provenance/v1" 
+      --comment $COMMENT 
+      --output-bundle "slsa.bundle"
     # 4. craft dsse envelope and attach
-    - cat slsa-prov-intoto.json | base64 | tr -d '\n' > slsa-prov-intoto.json.b64
-    - jq -r '.base64Signature' ./slsa-prov-intoto.json.bundle | tr -d '\n' > img.sig.b64
-    - python3 craft-dsse.py -f staas/dsse-schema.json -s ./img.sig.b64 -p ./slsa-prov-intoto.json.b64 -o slsa-prov.att # outputs slsa-prov.att
-    - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./slsa-prov.att "$CI_REGISTRY_IMAGE:1.0.7" --verbose
   after_script:
-    - jq -r '.cert' ./slsa-prov-intoto.json.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --verbose --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true --insecure-ignore-tlog=true
+    - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
+    - jq -r '.cert' ./slsa.bundle | base64 -d > cert.pem
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --verbose --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true
   allow_failure: true
   artifacts:
     when: always
     paths:
-      - slsa-prov-intoto.json.bundle
+      - slsa.bundle
 
 
 staas-sbom:
   stage: attestations
   needs: ["trivy_sbom", "kaniko-build"]
-  image: python:3.9
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - apt-get update && apt-get install jq -y
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - pip install requests
-    - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
-    - echo $CI_REGISTRY_PASSWORD | ./cosign login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin=true 
+    # add binaries
+    - apk --no-cache add curl jq python3 py3-pip cosign
+    - pip3 install requests --break-system-packages
+    # login to oci registry
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    # for sbom attestation: 1. generate sbom 2. make in-toto statement 3. hash & sign 4. craft dsse envelope
+    # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
     # 1 was done in trivy-sbom job
-    # 2. craft in-toto statement
-    - python3 craft-sbom-intoto.py -f staas/intoto-schema.json -n $CI_REGISTRY_IMAGE -d $(cat img.hash) -s image.sbom.json  # outputs sbom-intoto.json
-    # 3. sign w/ staas
+    # 2 and 3 are done by staas-cli
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
-    - python3 staas-sign.py -t $STAAS_API_KEY -a sbom-intoto.json -c $COMMENT -o sbom-intoto.json.bundle # do not enable -v here, output will explode the logs, sbom is huge
-    # 4. craft dsse envelope and attach
-    - cat sbom-intoto.json | base64 | tr -d '\n' > sbom-intoto.json.b64
-    - jq -r '.base64Signature' ./sbom-intoto.json.bundle | tr -d '\n' > img.sig.b64
-    - python3 craft-dsse.py -f staas/dsse-schema.json -s ./img.sig.b64 -p ./sbom-intoto.json.b64 -o sbom.att # outputs sbom.att
-    - COSIGN_EXPERIMENTAL=1 ./cosign attach attestation --attestation ./sbom.att "$CI_REGISTRY_IMAGE:1.0.7" --verbose
+    - |
+      python3 staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY \
+      --predicate ./image.sbom.json 
+      --predicate-type "https://cyclonedx.org/bom" 
+      --comment $COMMENT 
+      --output-bundle "sbom.bundle"
   after_script:
-    - jq -r '.cert' ./sbom-intoto.json.bundle | base64 -d > cert.pem
+    - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
+    - jq -r '.cert' ./sbom.bundle | base64 -d > cert.pem
     - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --verbose --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true --insecure-ignore-tlog=true
   allow_failure: true
   artifacts:
