@@ -213,7 +213,7 @@ staas-sign-container-image:
 
 trivy_sbom:
   stage: scan_image
-  needs: ["kaniko-build"]
+  needs: ["kaniko-build-mock"]
   image: docker:24
   services:
     - name: docker:24-dind
