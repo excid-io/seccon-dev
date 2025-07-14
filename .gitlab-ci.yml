@@ -213,7 +213,7 @@ staas-sign-container-image:
 
 trivy_sbom:
   stage: scan_image
-  needs: ["kaniko-build-mock"]
+  needs: ["kaniko-build"]
   image: docker:24
   services:
     - name: docker:24-dind
@@ -221,6 +221,7 @@ trivy_sbom:
   variables:
     DOCKER_TLS_CERTDIR: ""
   before_script:
+    - apk --no-cache add curl
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
   script:

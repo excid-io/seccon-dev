@@ -89,6 +89,8 @@ In order to create the attestation for this provenance we use STaaS, a Software 
 
 ![alt text](assets/diagram.jpg)
 
+Note: we use a premade image that contains the STaaS client and its required runtime dependencies (see jobs *staas-sign-container-image*, *staas-provenance*, *staas-sbom*).
+
 
 <!-- ## Project Components
 
