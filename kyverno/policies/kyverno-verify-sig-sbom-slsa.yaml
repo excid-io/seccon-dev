@@ -19,7 +19,7 @@ spec:
       context:
       - name: staas_data
         configMap:
-          name: staas_email
+          name: staas-email
           namespace: kyverno
       verifyImages:
       - imageReferences:
@@ -28,7 +28,7 @@ spec:
         attestors:
         - entries:
           - keyless:
-              subject: {{ staas_data.data.staas_email }}
+              subject: {{ staas_data.data.staas-email }}
               issuer: "https://staas.excid.io"
               # subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
               # issuer: "https://gitlab.com"
