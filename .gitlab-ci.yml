@@ -172,7 +172,8 @@ staas-sign-container-image:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - export COMMENT=container-signature-$CI_PIPELINE_URL
-    - ./staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
+    - ls -l
+    - python3 staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
   after_script:
     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
     - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
