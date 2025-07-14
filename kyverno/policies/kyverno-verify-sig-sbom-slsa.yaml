@@ -23,7 +23,7 @@ spec:
         attestors:
         - entries:
           - keyless:
-              subjectRegExp: "*@excid.io"
+              subjectRegExp: ".*@excid.io"
               issuer: "https://staas.excid.io"
               # subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
               # issuer: "https://gitlab.com"
