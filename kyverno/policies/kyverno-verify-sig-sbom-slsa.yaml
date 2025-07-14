@@ -16,11 +16,6 @@ spec:
         - resources:
             kinds:
               - Deployment
-      context:
-      - name: staas_data
-        configMap:
-          name: staas_email
-          namespace: kyverno
       verifyImages:
       - imageReferences:
         - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
@@ -28,7 +23,7 @@ spec:
         attestors:
         - entries:
           - keyless:
-              subject: {{ staas_data.data.staas_email }}
+              subjectRegExp: "*@excid.io"
               issuer: "https://staas.excid.io"
               # subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
               # issuer: "https://gitlab.com"
