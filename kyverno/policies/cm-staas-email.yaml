@@ -4,5 +4,5 @@ metadata:
   name: staas-email
   namespace: kyverno
 data:
-  staas-email: el.georgiadis@excid.io
+  staas_mail: el.georgiadis@excid.io
     
