@@ -116,6 +116,18 @@ stages:
 #       exists:
 #         - Dockerfile
 
+kaniko-build-mock:
+  stage: build_image
+  variables:
+    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+  script:
+    - echo 123456 > img.hash
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - img.hash
+
 # kaniko-build-unsigned:
 #   stage: build_image
 #   image:
@@ -166,7 +178,7 @@ stages:
 
 staas-sign-container-image:
   stage: sign_image
-  # needs: ["kaniko-build"]
+  needs: ["kaniko-build-mock"]
   image: ghcr.io/excid-io/staas-cli:latest
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -234,46 +246,30 @@ staas-sign-container-image:
 
 ################## attestation ##################
 
-# staas-provenance:
-#   stage: attestations
-#   needs: ["kaniko-build"]
-#   image: docker:24
-#   services:
-#     - name: docker:24-dind
-#       alias: docker
-#   variables:
-#     DOCKER_TLS_CERTDIR: ""
-#   before_script:
-#     # add binaries
-#     - apk --no-cache add curl jq python3 py3-pip cosign
-#     - pip3 install requests --break-system-packages
-#     - |
-#       VERSION="1.2.2"
-#       curl -LO "https://github.com/oras-project/oras/releases/download/v${VERSION}/oras_${VERSION}_linux_amd64.tar.gz"
-#       mkdir -p oras-install/
-#       tar -zxf oras_${VERSION}_*.tar.gz -C oras-install/
-#       mv oras-install/oras /usr/local/bin/
-#       rm -rf oras_${VERSION}_*.tar.gz oras-install/
-#     # login to gitlab registry
-#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-#   script:
-#     # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
-#     # 1 and 2 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the slsa in-toto statement
-#     # we make some adjustments to fit the staas-cli tool
-#     - jq -r '.predicate' ./artifacts-metadata.json > slsa-predicate.json
-#     # 3. the rest is done using staas-cli
-#     - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
-#     - python3 staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate ./slsa-predicate.json --predicate-type "https://slsa.dev/provenance/v1" --comment $COMMENT --output-bundle "slsa.bundle"
-#     # 4. craft dsse envelope and attach
-#   after_script:
-#     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
-#     - jq -r '.cert' ./slsa.bundle | base64 -d > cert.pem
-#     - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - slsa.bundle
+staas-provenance:
+  stage: attestations
+  needs: ["kaniko-build-mock"]
+  image: ghcr.io/excid-io/staas-cli:latest
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
+    # 1 and 2 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the slsa in-toto statement
+    # we make some adjustments to fit the staas-cli tool
+    - jq -r '.predicate' ./artifacts-metadata.json > slsa-predicate.json
+    # 3. the rest is done using staas-cli
+    - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
+    - python3 staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate ./slsa-predicate.json --predicate-type "https://slsa.dev/provenance/v1" --comment $COMMENT --output-bundle "slsa.bundle"
+    # 4. craft dsse envelope and attach
+  after_script:
+    - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
+    - jq -r '.cert' ./slsa.bundle | base64 -d > cert.pem
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain ./staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - slsa.bundle
 
 # staas-sbom:
 #   stage: attestations
