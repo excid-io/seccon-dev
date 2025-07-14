@@ -180,6 +180,8 @@ staas-sign-container-image:
   stage: sign_image
   needs: ["kaniko-build-mock"]
   image: ghcr.io/excid-io/staas-cli:latest
+  variables:
+    GIT_STRATEGY: none
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
@@ -250,6 +252,8 @@ staas-provenance:
   stage: attestations
   needs: ["kaniko-build-mock"]
   image: ghcr.io/excid-io/staas-cli:latest
+  variables:
+    GIT_STRATEGY: none
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
