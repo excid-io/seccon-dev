@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: staas_email
+  namespace: kyverno
+data:
+  staas_email: el.georgiadis@excid.io
+    
