@@ -30,8 +30,9 @@ spec:
               # subjectRegExp: 
               # issuerRegExp: 
               rekor:
-                ignoreTlog: true
                 url: https://rekor.sigstore.dev
+              ctlog:
+                ignoreSCT: true
               roots: |-
                 -----BEGIN CERTIFICATE-----
                 MIIBWjCCAQygAwIBAgIUFPDS+axV5MHzv+vkHAK2iwmSu4UwBQYDK2VwMCAxDjAM
