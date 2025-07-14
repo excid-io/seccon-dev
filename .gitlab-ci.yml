@@ -166,7 +166,7 @@ stages:
 
 staas-sign-container-image:
   stage: sign_image
-  needs: ["kaniko-build"]
+  # needs: ["kaniko-build"]
   image: ghcr.io/excid-io/staas-cli:latest
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
