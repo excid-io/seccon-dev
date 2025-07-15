@@ -252,7 +252,7 @@ staas-provenance:
     # 4. craft dsse envelope and attach
   after_script:
     - jq -r '.cert' ./slsa.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true --insecure-ignore-tlog=true
   allow_failure: true
   artifacts:
     when: always
