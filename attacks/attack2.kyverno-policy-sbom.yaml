@@ -1,0 +1,82 @@
+
+# Documentation: https://kyverno.io/docs/policy-types/cluster-policy/verify-images/sigstore/
+# Also check JMESPath, the json query tool that Kyverno uses https://release-1-8-0.kyverno.io/docs/writing-policies/jmespath/
+# Image verification rules: https://kyverno.io/docs/policy-types/cluster-policy/verify-images/
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-sig-sbom
+spec:
+  validationFailureAction: Audit
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verify-image-signature-keyless
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+      verifyImages:
+      - imageReferences:
+        - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
+        failureAction: Enforce
+        attestors:
+        - entries:
+          - keyless:
+              subjectRegExp: ".*@excid.io"
+              issuer: "https://staas.excid.io"
+              rekor:
+                url: https://rekor.sigstore.dev
+              ctlog:
+                  ignoreSCT: true
+              roots: |-
+                -----BEGIN CERTIFICATE-----
+                MIIBWjCCAQygAwIBAgIUFPDS+axV5MHzv+vkHAK2iwmSu4UwBQYDK2VwMCAxDjAM
+                BgNVBAMMBXN0YWFzMQ4wDAYDVQQKDAVFeGNJRDAgFw0yNDA0MDUwNjQ1MDVaGA8y
+                MTI0MDMxMjA2NDUwNVowIDEOMAwGA1UEAwwFc3RhYXMxDjAMBgNVBAoMBUV4Y0lE
+                MCowBQYDK2VwAyEAlP9VXPdDPkXyaEwdqEvNLMHUGqlV0BJaVp/Dkk1B+62jVjBU
+                MB0GA1UdDgQWBBTeaJm8uvtwe3ju/672sng5IQaozTAfBgNVHSMEGDAWgBTeaJm8
+                uvtwe3ju/672sng5IQaozTASBgNVHRMBAf8ECDAGAQH/AgEBMAUGAytlcANBAEhl
+                0Osao/HrZAHy3qvX20CdaJcLM/5IJOGchc19zkML0ydxeVVuMCu0l63QNKnkwshn
+                u6iURpe0wRJ8JPkzigk=
+                -----END CERTIFICATE-----
+    - name: check-sbom  # https://kyverno.io/policies/other/verify-sbom-cyclonedx/verify-sbom-cyclonedx/
+      match:
+        any:
+        - resources:
+            kinds:
+              - Deployment
+      verifyImages:
+      - imageReferences:
+        - "registry.gitlab.com/lefosg/excid-cicd-demo-project:*"
+        mutateDigest: false
+        attestations:
+        - type: https://cyclonedx.org/bom
+          attestors:
+          - entries:
+            - keyless:
+                subjectRegExp: ".*@excid.io"
+                issuer: "https://staas.excid.io"
+                rekor:
+                  url: https://rekor.sigstore.dev
+                ctlog:
+                  ignoreSCT: true
+                roots: |-
+                  -----BEGIN CERTIFICATE-----
+                  MIIBWjCCAQygAwIBAgIUFPDS+axV5MHzv+vkHAK2iwmSu4UwBQYDK2VwMCAxDjAM
+                  BgNVBAMMBXN0YWFzMQ4wDAYDVQQKDAVFeGNJRDAgFw0yNDA0MDUwNjQ1MDVaGA8y
+                  MTI0MDMxMjA2NDUwNVowIDEOMAwGA1UEAwwFc3RhYXMxDjAMBgNVBAoMBUV4Y0lE
+                  MCowBQYDK2VwAyEAlP9VXPdDPkXyaEwdqEvNLMHUGqlV0BJaVp/Dkk1B+62jVjBU
+                  MB0GA1UdDgQWBBTeaJm8uvtwe3ju/672sng5IQaozTAfBgNVHSMEGDAWgBTeaJm8
+                  uvtwe3ju/672sng5IQaozTASBgNVHRMBAf8ECDAGAQH/AgEBMAUGAytlcANBAEhl
+                  0Osao/HrZAHy3qvX20CdaJcLM/5IJOGchc19zkML0ydxeVVuMCu0l63QNKnkwshn
+                  u6iURpe0wRJ8JPkzigk=
+                  -----END CERTIFICATE-----
+          conditions:
+          - all:
+            - key: "{{ bomFormat }}"
+              operator: Equals
+              value: "CycloneDX"
+            - key: "{{ components[?name == 'express'].version | [0] }}"
+              operator: GreaterThanOrEquals
+              value: "4.0.0" 

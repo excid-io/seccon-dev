@@ -242,14 +242,13 @@ staas-provenance:
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
-    # 1 and 2 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the slsa in-toto statement
-    # we make some adjustments to fit the staas-cli tool
+    # for provenance attestation: 1. generate provenance 2. pass provenance predicate to staas-cli
+    # 1 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the *slsa in-toto statement* 
+    # that contains the predicate. we make extract the predicate and pass it to staas-cli
     - jq -r '.predicate' ./artifacts-metadata.json > slsa-predicate.json
     # 3. the rest is done using staas-cli
     - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
     - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate ./slsa-predicate.json --predicate-type "https://slsa.dev/provenance/v1" --comment $COMMENT --output-bundle "slsa.bundle"
-    # 4. craft dsse envelope and attach
   after_script:
     - jq -r '.cert' ./slsa.bundle | base64 -d > cert.pem
     - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true --insecure-ignore-tlog=true
@@ -266,9 +265,9 @@ staas-sbom:
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    # for provenance attestation: 1. generate provenance 2. make in-toto statement 3. hash, sign, craft dsse envelope & attach
+    # for sbom attestation: 1. generate sbom 2. pass sbom as predicate to staas-cli
     # 1 was done in trivy-sbom job
-    # 2 and 3 are done by staas-cli
+    # 2 run staas-cli.py
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
     - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate ./image.sbom.json --predicate-type "https://cyclonedx.org/bom" --comment $COMMENT --output-bundle "sbom.bundle"
   after_script:
@@ -279,6 +278,10 @@ staas-sbom:
     when: always
     paths:
       - sbom.bundle
+
+# For push-based deployments you can have two jobs similar to the following ones
+# For pull-based scenarios like the onces we describe in this repo (e.g., with FluxCD) the next two jobs 
+# don't really have an application. There could just be a trigger set up to run zap when deployment succeeds
 
 ################## deploy ##################
 

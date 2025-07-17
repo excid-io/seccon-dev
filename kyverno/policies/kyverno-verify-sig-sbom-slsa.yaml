@@ -27,7 +27,6 @@ spec:
               issuer: "https://staas.excid.io"
               # subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
               # issuer: "https://gitlab.com"
-              # subjectRegExp: 
               # issuerRegExp: 
               rekor:
                 url: https://rekor.sigstore.dev

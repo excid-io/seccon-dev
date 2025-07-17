@@ -28,6 +28,24 @@ Other possible scenarios (out of scope):
 
 ## Scenario 1
 
+We require our images to be signed during Continuous Integration. This ensures integrity and authenticity. If images are unsigned, anyone can make malicious changes to the image and they will remain undetected. So now with container signatures, we require some trusted entities (e.g., the GitLab runner) to sign the image.
+
+![alt-text](../assets/attack4_unsigned_image.jpg)
+
+The policy engine should ensure that the image is signed by the appropriate party.
+
+## Scenario 2
+
+Another way attestations can protect from attacks, is by creating the SBOM attestation. This way, we have an authenticated document stating that some dependencies exist in our codebase.
+If some dependency is known to be vulnerable or malicious, we can capture it in the SBOM and stop Continuous Deployment.
+
+![alt text](/assets/attack4_sbom.png)
+
+Generally, the SBOM is a very big json file and because some dependencies are loaded transitively, it is not easy/possible to check all of them. So we can pick a handful of them, and craft a policy that checks only for nitpicked dependencies. For example, in our express-js server we can have Kyverno check that the version of express-js (a core library included) is greater than 4.
+
+
+## Scenario 3
+
 Build from malicious source (different repository than the intended). In this scenario, we consider that someone created a repoository with a different name than the official one, and modifies the original CI pipeline so that it builds the code from the malicious repository.
 
 ![alt text](/assets/attack1_mal_repo.drawio.png)
@@ -41,7 +59,7 @@ After the malicious pipeline has run, when verifying, we can run some checks lik
 
 If the check above succeeds, then the repo is the original one. Otherwise, we fail the CD and do not deploy the container image.
 
-## Scenario 2
+## Scenario 4
 
 Contrary to the previous one, now the attackers build the same project - the official one - but from a previous version which is known to have vulnerabilities.
 
@@ -61,19 +79,4 @@ Having that in mind, we can verify two things:
 
 Attestation-wise, in the provenance attestation we can check the field of -->
 
-## Scenario 3
 
-Another way attestations can protect from attacks, is by creating the SBOM attestation. This way, we have an authenticated document stating that some dependencies exist in our codebase.
-If some dependency is known to be vulnerable or malicious, we can capture it in the SBOM and stop Continuous Deployment.
-
-![alt text](/assets/attack4_sbom.png)
-
-Generally, the SBOM is a very big json file and because some dependencies are loaded transitively, it is not easy/possible to check all of them. So we can pick a handful of them, and craft a policy that checks only for nitpicked dependencies. For example, in our express-js server we can have Kyverno check that the version of express-js (a core library included) is greater than 4.
-
-## Scenario 4
-
-We require our images to be signed during Continuous Integration. This ensures integrity and authenticity. If images are unsigned, anyone can make malicious changes to the image and they will be undetected. So now with container signatures, we require some trusted entities (e.g., the GitLab runner) to sign the image.
-
-![alt-text](../assets/attack4_unsigned_image.jpg)
-
-The policy engine should ensure that the image is signed by the appropriate party.

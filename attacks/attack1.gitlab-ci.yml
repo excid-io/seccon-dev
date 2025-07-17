@@ -1,91 +1,68 @@
 ### Attack 1 showcase
 
+# 1. Continuous Integration viewpoint
+# In this pipeline, an image is built, and later we suppose that some untrusted entity tampers with it
+# For simplicity, we think of "tampers" as an action that replaces the original image with another one (something 
+# like `crane copy excid-cicd-demo-project:1.0.7 alpine:latest`)
+# This is supposed to be done sometime after CI finishes, but for simplicity, and for seeing things from the same
+# point of view, we embed the "malicious" action in the pipeline right after building the image
+
+# 2. Continuous Deployment viewpoint
+# More or less, the same Kyverno policy applies for all attacks. We have authored a policy 
+# (attack1.kyverno-policy-sig.yaml) that expects image "registry.gitlab.../excid-cicd-demo-project:1.0.7" 
+# to be signed by a trusted entity (this is the entity that owns the STaaS token, $STAAS_EMAIL or something similar). 
+
 stages:
   - build_image
-  - scan_image
-  - attestations
+  - tamper_with_image
 
 ################## build_image ##################
 
-docker-build:
+kaniko-build:
   stage: build_image
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
   variables:
-    DOCKER_IMAGE_NAME: https://gitlab.com/excid-demo/excid-civd-demo-project:$CI_COMMIT_REF_SLUG
-    DOCKERFILE: excid-civd-demo-project/Dockerfile
-    SECURE_FILES_DOWNLOAD_PATH: './'
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - apk update && apk add curl
   script:
-    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | sh
-    - mkdir security
-    - mv FAIRDICE.crt FAIRDICE.key security
-    - apk add git && git clone $DOCKER_IMAGE_NAME  -q
-    - docker build --iidfile img.hash -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG $DOCKERFILE
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
-    # - |
-    #   if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-    #     docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
-    #     docker push "$DOCKER_IMAGE_NAME:latest"
-    #   fi 
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:1.0.7"
+      --image-name-with-digest-file tmp.hash
+    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
+  allow_failure: true
   artifacts:
     when: always
     paths:
       - img.hash
-  allow_failure: true
   rules:
     - if: $CI_COMMIT_BRANCH
       exists:
         - Dockerfile
 
-################## attestation ##################
-
-staas-provenance:
-  stage: attestations
-  needs: ["docker-build"]
-  image: python:3.9
+# here the malicious actor replaces the original image with his own
+# if no policy is applied, its authenticity will not be questioned so the image will run in the cluster
+malicious-action:
+  stage: tamper_with_image
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - apt-get update && apt-get install jq -y
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - pip install requests
-  script: # img.prov.json is an in-toto statment, a provenance document about the container image
-    - |
-      export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
-      jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-    - export COMMENT=provenance
-    - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
-  after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - image.prov.json.bundle
-
-staas-sbom:
-  stage: attestations
-  image: python:3.9
-  needs: ["docker-build"]
-  before_script:
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - pip install requests
+    - apk add jq
+    - apk add curl
+    - VERSION=$(curl -s "https://api.github.com/repos/google/go-containerregistry/releases/latest" | jq -r '.tag_name')
+    - | 
+      OS=Linux
+      ARCH=x86_64
+      curl -sL "https://github.com/google/go-containerregistry/releases/download/${VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" > go-containerregistry.tar.gz
+    - tar -zxvf go-containerregistry.tar.gz -C /usr/local/bin/ crane
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - export COMMENT=sbom
-    - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
-  after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle img.sbom.json.bundle img.sbom.json
+    - crane delete "${CI_REGISTRY_IMAGE}:1.0.7"
+    - crane copy alpine:latest "${CI_REGISTRY_IMAGE}:1.0.7"
   allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - img.sbom.json.bundle
-  

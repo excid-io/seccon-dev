@@ -1,91 +1,129 @@
 ### Attack 2 showcase
 
+# 1. Continuous Integration viewpoint
+# In this pipeline, an image is built using an outdated dependency. Here, because this is an express-js project,
+# we define outdated as "express-js version < 4". We suppose during CI an attacker manages to install express version 3.
+
+# 2. Continuous Deployment viewpoint
+# More or less, the same Kyverno policy applies for all attacks. We have authored a policy that expects the SBOM of image 
+# to be attested using STaaS CLI. The expectation regarding the SBOM contents states that 
+# "express-js version should be > 4". Also, the image itself is signed and verified.
 stages:
+  - tamper_with_image
   - build_image
-  - scan_image
+  - sign_image
+  - generate_sbom
   - attestations
 
-################## build_image ##################
-
-docker-build:
-  stage: build_image
-  image: docker:24.0.5
+# this installs the outdated dependency
+malicious-action:
+  stage: tamper_with_image
+  image: docker:24
   services:
-    - docker:24.0.5-dind
+    - name: docker:24-dind
+      alias: docker
   variables:
-    DOCKER_IMAGE_NAME: https://gitlab.com/excid-demo/excid-civd-demo-project:$CI_COMMIT_REF_SLUG
-    DOCKERFILE: excid-civd-demo-project/Dockerfile
-    SECURE_FILES_DOWNLOAD_PATH: './'
-    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-    - apk update && apk add curl
+    - apk add npm
   script:
-    - curl --silent "https://gitlab.com/gitlab-org/incubation-engineering/mobile-devops/download-secure-files/-/raw/main/installer" | sh
-    - mkdir security
-    - mv FAIRDICE.crt FAIRDICE.key security
-    - apk add git && git clone $DOCKER_IMAGE_NAME  -q
-    - docker build --iidfile img.hash -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG $DOCKERFILE
-    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
-    # - |
-    #   if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
-    #     docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
-    #     docker push "$DOCKER_IMAGE_NAME:latest"
-    #   fi 
+    - npm i express@3
+  allow_failure: true
+
+# build the image with the vulnerable dependency
+kaniko-build:
+  stage: build_image
+  needs: ["malicious-action"]
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  variables:
+    RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:1.0.7"
+      --image-name-with-digest-file tmp.hash
+    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
+  allow_failure: true
   artifacts:
     when: always
     paths:
       - img.hash
-  allow_failure: true
   rules:
     - if: $CI_COMMIT_BRANCH
       exists:
         - Dockerfile
 
-################## attestation ##################
-
-staas-provenance:
-  stage: attestations
-  needs: ["docker-build"]
-  image: python:3.9
+staas-sign-container-image:
+  stage: sign_image
+  needs: ["kaniko-build"]
+  image: ghcr.io/excid-io/staas-cli:latest
   before_script:
-    - apt-get update && apt-get install jq -y
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - pip install requests
-  script: # img.prov.json is an in-toto statment, a provenance document about the container image
-    - |
-      export IMG_HASH_B64=$(cat img.hash | base64 -w 0)
-      jq --arg b64hash "$IMG_HASH_B64" --arg imgname "$CI_REGISTRY_IMAGE" '.subject = [{"name":$imgname, "digest":{"sha256":$b64hash}}]' artifacts-metadata.json > image.prov.json
-    - export COMMENT=provenance
-    - python3 staas-upload.py image.prov.json $STAAS_API_TOKEN $COMMENT
-  after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle image.prov.json.bundle image.prov.json
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - image.prov.json.bundle
-
-staas-sbom:
-  stage: attestations
-  image: python:3.9
-  needs: ["docker-build"]
-  before_script:
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
-    - pip install requests
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - export COMMENT=sbom
-    - python3 staas-upload.py img.sbom.json $STAAS_API_TOKEN $COMMENT
+    - export COMMENT=container-signature-$CI_PIPELINE_URL
+    - python3 /staas/staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
   after_script:
-    - ./cosign verify-blob --certificate-identity=el.georgiadis@aueb.gr --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ca.pem --insecure-ignore-sct --bundle img.sbom.json.bundle img.sbom.json
+    - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct
   allow_failure: true
   artifacts:
     when: always
     paths:
-      - img.sbom.json.bundle
-  
+      - payload.json.bundle
+
+trivy_sbom:
+  stage: generate_sbom
+  needs: ["sign-container-image"]
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+    COSIGN_YES: "true"
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  before_script:
+    - apk --no-cache add curl
+    # - apk --no-cache add jq
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - mv cosign-linux-amd64 cosign
+    - chmod +x cosign
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - apk --no-cache add python3 py3-pip
+    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+  script:
+    - docker pull "$CI_REGISTRY_IMAGE:1.0.7"
+    - trivy image --format cyclonedx -o image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - image.sbom.json
+
+attest-sbom:
+  stage: attestations
+  needs: ["trivy_sbom"]
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+      COSIGN_YES: "true"
+  id_tokens:
+    SIGSTORE_ID_TOKEN:
+      aud: sigstore
+  before_script:
+    - apk --no-cache add curl
+    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
+    - mv cosign-linux-amd64 cosign
+    - chmod +x cosign
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type 'https://cyclonedx.org/bom' --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
+  after_script:
+    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type cyclonedx "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
+  allow_failure: true
