@@ -23,12 +23,8 @@ spec:
         attestors:
         - entries:
           - keyless:
-              subjectRegExp: ".*@excid.io"
-              issuer: "https://staas.excid.io"
-              # subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
-              # issuer: "https://gitlab.com"
-              # subjectRegExp: 
-              # issuerRegExp: 
+              subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+              issuer: "https://gitlab.com"
               rekor:
                 url: https://rekor.sigstore.dev
               ctlog:
@@ -59,10 +55,8 @@ spec:
           attestors:
           - entries:
             - keyless:
-                subjectRegExp: ".*@excid.io"
-                issuer: "https://staas.excid.io"
-                # subjectRegExp: 
-                # issuerRegExp: 
+                subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
+                issuer: "https://gitlab.com"
                 rekor:
                   ignoreTlog: true
                   url: https://rekor.sigstore.dev
@@ -104,13 +98,23 @@ spec:
             - keyless:
                 subject: "https://gitlab.com/lefosg/excid-cicd-demo-project//.gitlab-ci.yml@refs/heads/main"
                 issuer: "https://gitlab.com"
-                # subjectRegExp: 
-                # issuerRegExp: 
                 rekor:
                   ignoreTlog: true
                   url: https://rekor.sigstore.dev
                 ctlog:
                   ignoreSCT: true
+                roots: |-
+                  -----BEGIN CERTIFICATE-----
+                  MIIBWjCCAQygAwIBAgIUFPDS+axV5MHzv+vkHAK2iwmSu4UwBQYDK2VwMCAxDjAM
+                  BgNVBAMMBXN0YWFzMQ4wDAYDVQQKDAVFeGNJRDAgFw0yNDA0MDUwNjQ1MDVaGA8y
+                  MTI0MDMxMjA2NDUwNVowIDEOMAwGA1UEAwwFc3RhYXMxDjAMBgNVBAoMBUV4Y0lE
+                  MCowBQYDK2VwAyEAlP9VXPdDPkXyaEwdqEvNLMHUGqlV0BJaVp/Dkk1B+62jVjBU
+                  MB0GA1UdDgQWBBTeaJm8uvtwe3ju/672sng5IQaozTAfBgNVHSMEGDAWgBTeaJm8
+                  uvtwe3ju/672sng5IQaozTASBgNVHRMBAf8ECDAGAQH/AgEBMAUGAytlcANBAEhl
+                  0Osao/HrZAHy3qvX20CdaJcLM/5IJOGchc19zkML0ydxeVVuMCu0l63QNKnkwshn
+                  u6iURpe0wRJ8JPkzigk=
+                  -----END CERTIFICATE-----
+
           conditions:
           - all:
             - key: "{{ predicate.buildDefinition.resolvedDependencies[0].uri }}"
