@@ -114,7 +114,6 @@ spec:
                   0Osao/HrZAHy3qvX20CdaJcLM/5IJOGchc19zkML0ydxeVVuMCu0l63QNKnkwshn
                   u6iURpe0wRJ8JPkzigk=
                   -----END CERTIFICATE-----
-
           conditions:
           - all:
             - key: "{{ predicate.buildDefinition.resolvedDependencies[0].uri }}"
