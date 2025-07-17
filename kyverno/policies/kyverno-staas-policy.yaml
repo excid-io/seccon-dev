@@ -1,4 +1,3 @@
-
 # Documentation: https://kyverno.io/docs/policy-types/cluster-policy/verify-images/sigstore/
 # Also check JMESPath, the JSON query tool that Kyverno uses https://release-1-8-0.kyverno.io/docs/writing-policies/jmespath/
 # Image verification rules: https://kyverno.io/docs/policy-types/cluster-policy/verify-images/
@@ -114,7 +113,6 @@ spec:
                   0Osao/HrZAHy3qvX20CdaJcLM/5IJOGchc19zkML0ydxeVVuMCu0l63QNKnkwshn
                   u6iURpe0wRJ8JPkzigk=
                   -----END CERTIFICATE-----
-
           conditions:
           - all:
             - key: "{{ predicate.buildDefinition.resolvedDependencies[0].uri }}"

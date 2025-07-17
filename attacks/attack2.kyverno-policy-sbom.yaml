@@ -80,3 +80,4 @@ spec:
             - key: "{{ components[?name == 'express'].version | [0] }}"
               operator: GreaterThanOrEquals
               value: "4.0.0" 
+ 

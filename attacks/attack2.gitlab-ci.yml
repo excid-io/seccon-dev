@@ -14,7 +14,7 @@ stages:
   - sign_image
   - generate_sbom
   - attestations
-
+ 
 # this installs the outdated dependency
 malicious-action:
   stage: tamper_with_image

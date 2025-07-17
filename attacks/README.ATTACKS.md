@@ -1,14 +1,14 @@
 # Attack scenarios & Mitigations
 
-In this repo we also consider how attestations protect from specific attack scenarios. We provide en extra yaml file which is vulnerable (`vulnerable.gitlab-ci.yml`)
+In this repo we also consider how attestations protect from specific attack scenarios. We provide some extra yaml files which are vulnerable to various attacks (e.g., installing a malicious dependency). 
 
-***Note***: GitLab CI can only have **one** `.gitlab-ci.yml` file in the repo which runs the pipeline and **must** be in the project root direct, so rename the file you want to run accordingly, and backup the old one.
+***Note***: GitLab CI can only have **one** `.gitlab-ci.yml` file in the repo which runs the pipeline and **must** be in the project root direct, so if you want to run these attack simulations, rename the file you want to run accordingly and backup the old one.
 
-The purpose is to show how a vulnerable `.gitlab-ci.yml` file can be exploited, and how attestations and signatures protect from such attacks. We use *Kyverno* to verify the attestations. More details about *Kyverno* and its functionality see the folder *Kyverno* in the repo.
+The purpose is to show how a vulnerable `.gitlab-ci.yml` file can be exploited, and how attestations and signatures protect from such attacks. We use *Kyverno* to verify signatures and attestations. For more details about *Kyverno* and its functionality see the folder *Kyverno* in the repo.
 
 Let's consider the following example: if our repo's name is `excid-cicd-demo-project`, the attacker can create another repo which is typosquatted, like `excid-civd-demo-project`, and upload a pipeline which executes `docker build excid-civd-demo-project`, and thus, builds and pushes a malicious copy of our project.
 
-Attacks covered in this repo are mostly related to the threats mentioned in the [SLSA specification threat list](https://slsa.dev/spec/v1.0/threats-overview), one dependency attack to showcase how the SBOM attestation can protect from vulnerable dependencies, typosquatted dependencies etc, plus one attack regarding signing from an unauthorized party.
+Exemplary attacks explained in this repo are mostly related to the threats mentioned in the [SLSA specification threat list](https://slsa.dev/spec/v1.0/threats-overview), one dependency attack to showcase how the SBOM attestation can protect from vulnerable dependencies, typosquatted dependencies etc, plus one attack regarding signing from an unauthorized party. For simplicity, the last two are implemented. In this folder there are two vulnerable pipelines (one for each scenario) plus one Kyverno policy that protects from these vulnerabilities.
 
 Scenarios considered:
 
@@ -26,7 +26,7 @@ Other possible scenarios (out of scope):
 - Submit unauthorized changes in source code -> two-person review
 - Compromise source repo -> branch protection, harden VCS
 
-## Scenario 1
+## Scenario 1 - Unsigned Image
 
 We require our images to be signed during Continuous Integration. This ensures integrity and authenticity. If images are unsigned, anyone can make malicious changes to the image and they will remain undetected. So now with container signatures, we require some trusted entities (e.g., the GitLab runner) to sign the image.
 
@@ -34,7 +34,7 @@ We require our images to be signed during Continuous Integration. This ensures i
 
 The policy engine should ensure that the image is signed by the appropriate party.
 
-## Scenario 2
+## Scenario 2 - Malicious Dependency
 
 Another way attestations can protect from attacks, is by creating the SBOM attestation. This way, we have an authenticated document stating that some dependencies exist in our codebase.
 If some dependency is known to be vulnerable or malicious, we can capture it in the SBOM and stop Continuous Deployment.
@@ -44,7 +44,7 @@ If some dependency is known to be vulnerable or malicious, we can capture it in 
 Generally, the SBOM is a very big json file and because some dependencies are loaded transitively, it is not easy/possible to check all of them. So we can pick a handful of them, and craft a policy that checks only for nitpicked dependencies. For example, in our express-js server we can have Kyverno check that the version of express-js (a core library included) is greater than 4.
 
 
-## Scenario 3
+## Scenario 3 - Build From Malicious Source (typosquatted)
 
 Build from malicious source (different repository than the intended). In this scenario, we consider that someone created a repoository with a different name than the official one, and modifies the original CI pipeline so that it builds the code from the malicious repository.
 
@@ -59,7 +59,7 @@ After the malicious pipeline has run, when verifying, we can run some checks lik
 
 If the check above succeeds, then the repo is the original one. Otherwise, we fail the CD and do not deploy the container image.
 
-## Scenario 4
+## Scenario 4 - Build From Legitimate Source But Old Version 
 
 Contrary to the previous one, now the attackers build the same project - the official one - but from a previous version which is known to have vulnerabilities.
 

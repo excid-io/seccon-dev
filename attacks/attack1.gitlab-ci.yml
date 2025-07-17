@@ -11,7 +11,7 @@
 # More or less, the same Kyverno policy applies for all attacks. We have authored a policy 
 # (attack1.kyverno-policy-sig.yaml) that expects image "registry.gitlab.../excid-cicd-demo-project:1.0.7" 
 # to be signed by a trusted entity (this is the entity that owns the STaaS token, $STAAS_EMAIL or something similar). 
-
+ 
 stages:
   - build_image
   - tamper_with_image
