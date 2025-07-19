@@ -243,15 +243,12 @@ staas-provenance:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     # for provenance attestation: 1. generate provenance 2. pass provenance predicate to staas-cli
-    # 1 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the *slsa in-toto statement* 
+    # 1 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the *slsa provenance in-toto statement* 
     # that contains the predicate. we make extract the predicate and pass it to staas-cli
-    - jq -r '.predicate' ./artifacts-metadata.json > slsa-predicate.json
     # 3. the rest is done using staas-cli
-    - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
     - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate-type "https://slsa.dev/provenance/v1" --predicate ./slsa-predicate.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
   after_script:
-    - jq -r '.cert' ./slsa.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true --insecure-ignore-tlog=true
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct=true
   allow_failure: true
 
 staas-sbom:
@@ -264,18 +261,12 @@ staas-sbom:
     # for sbom attestation: 1. generate sbom 2. pass sbom as predicate to staas-cli
     # 1 was done in trivy-sbom job
     # 2 run staas-cli.py
-    - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
     - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
   after_script:
-    - jq -r '.cert' ./sbom.bundle | base64 -d > cert.pem
-    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct=true
   allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - sbom.bundle
 
-# For push-based deployments you can have two jobs similar to the following ones
+# For push-based deployments you can have two extra jobs similar to the following ones
 # For pull-based scenarios like the onces we describe in this repo (e.g., with FluxCD) the next two jobs 
 # don't really have an application. There could just be a trigger set up to run zap when deployment succeeds
 
@@ -289,8 +280,8 @@ staas-sbom:
 #     - apt-get update && apt-get install openssh
 #     - apt-get install sshpass
 #   script:
-#     - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@$APP_VM_IP docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
-#     - sshpass -p $AZURE_APPVM_PASS ssh -o StrictHostKeyChecking=no $AZURE_APPVM_USER@$APP_VM_IP docker run -it -d --rm -p 8080:8080 -p 8443:8443 "$CI_REGISTRY_IMAGE:latest" 
+#     - sshpass -p $VM_PASS ssh -o StrictHostKeyChecking=no $APPVM_USER@$APP_VM_IP docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+#     - sshpass -p $VM_PASS ssh -o StrictHostKeyChecking=no $APPVM_USER@$APP_VM_IP docker run -it -d --rm -p 8080:8080 -p 8443:8443 "$CI_REGISTRY_IMAGE:latest" 
 
 ################## dast_zap ##################
 
