@@ -92,41 +92,41 @@ stages:
 
 ################## build_image ##################
 
-# kaniko-build:
-#   stage: build_image
-#   image:
-#     name: gcr.io/kaniko-project/executor:v1.23.2-debug
-#     entrypoint: [""]
-#   variables:
-#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-#   script:
-#     - /kaniko/executor
-#       --context "${CI_PROJECT_DIR}"
-#       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-#       --destination "${CI_REGISTRY_IMAGE}:1.0.7"
-#       --image-name-with-digest-file tmp.hash
-#     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - img.hash
-#   rules:
-#     - if: $CI_COMMIT_BRANCH
-#       exists:
-#         - Dockerfile
-
-kaniko-build-mock:
+kaniko-build:
   stage: build_image
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
   variables:
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
   script:
-    - echo 123456 > img.hash
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:1.0.7"
+      --image-name-with-digest-file tmp.hash
+    - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
   allow_failure: true
   artifacts:
     when: always
     paths:
       - img.hash
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      exists:
+        - Dockerfile
+
+# kaniko-build-mock:
+#   stage: build_image
+#   variables:
+#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+#   script:
+#     - echo 123456 > img.hash
+#   allow_failure: true
+#   artifacts:
+#     when: always
+#     paths:
+#       - img.hash
 
 # kaniko-build-unsigned:
 #   stage: build_image
@@ -178,7 +178,7 @@ kaniko-build-mock:
 
 staas-sign-container-image:
   stage: sign_image
-  needs: ["kaniko-build-mock"]
+  needs: ["kaniko-build"]
   image: ghcr.io/excid-io/staas-cli:latest
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -213,7 +213,7 @@ staas-sign-container-image:
 
 trivy_sbom:
   stage: scan_image
-  needs: ["kaniko-build-mock"]
+  needs: ["kaniko-build"]
   image: docker:24
   services:
     - name: docker:24-dind
@@ -237,7 +237,7 @@ trivy_sbom:
 
 staas-provenance:
   stage: attestations
-  needs: ["kaniko-build-mock"]
+  needs: ["kaniko-build"]
   image: ghcr.io/excid-io/staas-cli:latest
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
@@ -256,7 +256,7 @@ staas-provenance:
 
 staas-sbom:
   stage: attestations
-  needs: ["trivy_sbom", "kaniko-build-mock"] 
+  needs: ["trivy_sbom", "kaniko-build"] 
   image: ghcr.io/excid-io/staas-cli:latest
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
