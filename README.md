@@ -126,6 +126,6 @@ sudo gitlab-runner run
 
 Match the settings to your preferences and security requirements.
 
-## Related posts
+## Related Posts
 
 1. [GitLab Artifact Attestations with STaaS](https://medium.com/@excid/gitlab-artifact-attestations-with-staas-809b4fb5a9fc)
