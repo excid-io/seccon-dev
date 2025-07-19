@@ -248,15 +248,11 @@ staas-provenance:
     - jq -r '.predicate' ./artifacts-metadata.json > slsa-predicate.json
     # 3. the rest is done using staas-cli
     - export COMMENT=slsa-provenance-attestation-$CI_PIPELINE_URL
-    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate ./slsa-predicate.json --predicate-type "https://slsa.dev/provenance/v1" --comment $COMMENT --output-bundle "slsa.bundle"
+    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate-type "https://slsa.dev/provenance/v1" --predicate ./slsa-predicate.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
   after_script:
     - jq -r '.cert' ./slsa.bundle | base64 -d > cert.pem
     - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true --insecure-ignore-tlog=true
   allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - slsa.bundle
 
 staas-sbom:
   stage: attestations
@@ -269,7 +265,7 @@ staas-sbom:
     # 1 was done in trivy-sbom job
     # 2 run staas-cli.py
     - export COMMENT=sbom-attestation-$CI_PIPELINE_URL
-    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate ./image.sbom.json --predicate-type "https://cyclonedx.org/bom" --comment $COMMENT --output-bundle "sbom.bundle"
+    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
   after_script:
     - jq -r '.cert' ./sbom.bundle | base64 -d > cert.pem
     - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --certificate ./cert.pem --insecure-ignore-sct=true
