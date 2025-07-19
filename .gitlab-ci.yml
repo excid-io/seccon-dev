@@ -1,9 +1,9 @@
 # This version of the pipeline uses STaaS instead of cosign
 
 stages:
-  # - secret_scanning
-  # - sast
-  # - sca
+  - secret_scanning
+  - sast
+  - sca
   - build_image
   - sign_image
   - scan_image
@@ -13,82 +13,82 @@ stages:
 
 ################## secret_scanning ##################
 
-# gitleaks:
-#   stage: secret_scanning
-#   image:
-#     name: zricethezav/gitleaks
-#     entrypoint: [""]
-#   script:
-#     - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json --exit-code 0
-#     - gitleaks git . --verbose -f json -r gitleaks_detect_git.json --exit-code 0
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - gitleaks_detect_dir.json
-#       - gitleaks_detect_git.json
+gitleaks:
+  stage: secret_scanning
+  image:
+    name: zricethezav/gitleaks
+    entrypoint: [""]
+  script:
+    - gitleaks dir . --verbose -f json -r gitleaks_detect_dir.json --exit-code 0
+    - gitleaks git . --verbose -f json -r gitleaks_detect_git.json --exit-code 0
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - gitleaks_detect_dir.json
+      - gitleaks_detect_git.json
 
 # ################## sast ##################
 
-# njsscan:
-#   stage: sast
-#   needs: ["gitleaks"]
-#   image: python
-#   before_script:
-#     - pip3 install --upgrade njsscan
-#   script:
-#     - njsscan . --exit-warning --sarif -o njsscan.sarif
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#     - njsscan.sarif
+njsscan:
+  stage: sast
+  needs: ["gitleaks"]
+  image: python
+  before_script:
+    - pip3 install --upgrade njsscan
+  script:
+    - njsscan . --exit-warning --sarif -o njsscan.sarif
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+    - njsscan.sarif
 
-# semgrep:
-#   stage: sast
-#   needs: ["gitleaks"]
-#   image: returntocorp/semgrep
-#   variables:
-#     SEMGREP_RULES: p/javascript
-#   script:
-#     - semgrep ci --json --output semgrep.json
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#     - semgrep.json
+semgrep:
+  stage: sast
+  needs: ["gitleaks"]
+  image: returntocorp/semgrep
+  variables:
+    SEMGREP_RULES: p/javascript
+  script:
+    - semgrep ci --json --output semgrep.json
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+    - semgrep.json
 
-# sonarqube:
-#   image: 
-#       name: sonarsource/sonar-scanner-cli:11
-#       entrypoint: [""]
-#   variables:
-#     SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-#     GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
-#   stage: sast  
-#   cache:
-#     policy: pull-push
-#     key: "sonar-cache-$CI_COMMIT_REF_SLUG"
-#     paths:      
-#       - "${SONAR_USER_HOME}/cache"
-#       - sonar-scanner/
-#   script: 
-#     - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
-#   allow_failure: true
+sonarqube:
+  image: 
+      name: sonarsource/sonar-scanner-cli:11
+      entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  stage: sast  
+  cache:
+    policy: pull-push
+    key: "sonar-cache-$CI_COMMIT_REF_SLUG"
+    paths:      
+      - "${SONAR_USER_HOME}/cache"
+      - sonar-scanner/
+  script: 
+    - sonar-scanner -Dsonar.host.url="${SONAR_HOST_URL}"
+  allow_failure: true
 
 # ################## sca ##################
   
-# retire:
-#   stage: sca
-#   image: node:latest
-#   needs: ["njsscan", "semgrep", "sonarqube"]
-#   before_script:
-#     - npm install -g retire
-#   script:
-#     - retire --outputformat cyclonedx --exitwith 0 --outputpath retirejs.xml
-#   artifacts:
-#     reports:
-#       sast: retirejs.xml
+retire:
+  stage: sca
+  image: node:latest
+  needs: ["njsscan", "semgrep", "sonarqube"]
+  before_script:
+    - npm install -g retire
+  script:
+    - retire --outputformat cyclonedx --exitwith 0 --outputpath retirejs.xml
+  artifacts:
+    reports:
+      sast: retirejs.xml
 
 ################## build_image ##################
 
@@ -97,6 +97,7 @@ kaniko-build:
   image:
     name: gcr.io/kaniko-project/executor:v1.23.2-debug
     entrypoint: [""]
+  needs: ["retire"]
   variables:
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
   script:
@@ -115,18 +116,6 @@ kaniko-build:
     - if: $CI_COMMIT_BRANCH
       exists:
         - Dockerfile
-
-# kaniko-build-mock:
-#   stage: build_image
-#   variables:
-#     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-#   script:
-#     - echo 123456 > img.hash
-#   allow_failure: true
-#   artifacts:
-#     when: always
-#     paths:
-#       - img.hash
 
 # kaniko-build-unsigned:
 #   stage: build_image
@@ -148,7 +137,25 @@ kaniko-build:
 
 ################## sign_image ##################
 
-# This job uses a docker image, and installs runtime dependencies. There is also a premade image (see next job)
+# Recommended way of using STaaS is by using the staas-cli image
+staas-sign-container-image:
+  stage: sign_image
+  needs: ["kaniko-build"]
+  image: ghcr.io/excid-io/staas-cli:latest
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - export COMMENT=container-signature-$CI_PIPELINE_URL
+    - python3 /staas/staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
+  after_script:
+    - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - payload.json.bundle
+
+# This job uses a docker image, and installs runtime dependencies. The above job is the recommended way of running staas-cli
 # staas-sign-container-image:
 #   stage: sign_image
 #   needs: ["kaniko-build"]
@@ -176,40 +183,24 @@ kaniko-build:
 #     paths:
 #       - payload.json.bundle
 
-staas-sign-container-image:
-  stage: sign_image
-  needs: ["kaniko-build"]
-  image: ghcr.io/excid-io/staas-cli:latest
-  before_script:
-    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  script:
-    - export COMMENT=container-signature-$CI_PIPELINE_URL
-    - python3 /staas/staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
-  after_script:
-    - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - payload.json.bundle
 
 ################## scan_image ##################
 
-# trivy_scan:
-#   stage: scan_image
-#   needs: ["kaniko-build"]
-#   image: docker:24
-#   services:
-#     - name: docker:24-dind
-#       alias: docker
-#   before_script:
-#     - apk --no-cache add curl python3 py3-pip
-#     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-#     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-#   script:
-#     - docker pull "$CI_REGISTRY_IMAGE:latest"
-#     - trivy image "$CI_REGISTRY_IMAGE:latest"
-#   allow_failure: true
+trivy_scan:
+  stage: scan_image
+  needs: ["kaniko-build"]
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  before_script:
+    - apk --no-cache add curl python3 py3-pip
+    - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker pull "$CI_REGISTRY_IMAGE:latest"
+    - trivy image "$CI_REGISTRY_IMAGE:latest"
+  allow_failure: true
 
 trivy_sbom:
   stage: scan_image
