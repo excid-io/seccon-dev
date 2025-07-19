@@ -243,8 +243,9 @@ staas-provenance:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     # for provenance attestation: 1. generate provenance 2. pass provenance predicate to staas-cli
-    # 1 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the *slsa provenance in-toto statement* 
+    # 1 was done in kaniko-build job. The "RUNNER_GENERATE_ARTIFACTS_METADATA" generates the *slsa in-toto statement* 
     # that contains the predicate. we make extract the predicate and pass it to staas-cli
+    - jq -r '.predicate' ./artifacts-metadata.json > slsa-predicate.json
     # 3. the rest is done using staas-cli
     - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate-type "https://slsa.dev/provenance/v1" --predicate ./slsa-predicate.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
   after_script:
