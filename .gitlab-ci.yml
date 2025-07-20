@@ -22,10 +22,10 @@ kaniko-malicious-build:
     entrypoint: [""]
   variables:
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
-  before_script:
-    - apk add npm
+  # before_script:
+  #   - apk add npm
   script:
-    - npm i express@3
+    # - npm i express@3
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
