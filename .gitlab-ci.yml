@@ -9,37 +9,23 @@
 # to be attested using STaaS CLI. The expectation regarding the SBOM contents states that 
 # "express-js version should be > 4". Also, the image itself is signed and verified.
 stages:
-  - tamper_with_image
   - build_image
   - sign_image
   - generate_sbom
   - attestations
  
-# this installs the outdated dependency
-malicious-action:
-  stage: tamper_with_image
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  variables:
-    DOCKER_TLS_CERTDIR: ""
-  before_script:
-    - apk add npm
-  script:
-    - npm i express@3
-  allow_failure: true
-
 # build the image with the vulnerable dependency
-kaniko-build:
+kaniko-malicious-build:
   stage: build_image
-  needs: ["malicious-action"]
   image:
     name: gcr.io/kaniko-project/executor:v1.23.2-debug
     entrypoint: [""]
   variables:
     RUNNER_GENERATE_ARTIFACTS_METADATA: "true"
+  before_script:
+    - apk add npm
   script:
+    - npm i express@3
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
@@ -58,7 +44,7 @@ kaniko-build:
 
 sign-container-image:
   stage: sign_image
-  needs: ["kaniko-build"]
+  needs: ["kaniko-malicious-build"]
   image: ghcr.io/excid-io/staas-cli:latest
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
