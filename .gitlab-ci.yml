@@ -92,26 +92,17 @@ trivy_sbom:
     paths:
       - image.sbom.json
 
-attest-sbom:
+staas-sbom:
   stage: attestations
-  needs: ["trivy_sbom"]
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      alias: docker
-  variables:
-      COSIGN_YES: "true"
-  id_tokens:
-    SIGSTORE_ID_TOKEN:
-      aud: sigstore
+  needs: ["trivy_sbom"] 
+  image: ghcr.io/excid-io/staas-cli:latest
   before_script:
-    - apk --no-cache add curl
-    - curl -O -L "https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64"
-    - mv cosign-linux-amd64 cosign
-    - chmod +x cosign
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign attest -y --type 'https://cyclonedx.org/bom' --predicate image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
+    # for sbom attestation: 1. generate sbom 2. pass sbom as predicate to staas-cli
+    # 1 was done in trivy-sbom job
+    # 2 run staas-cli.py
+    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
   after_script:
-    - COSIGN_EXPERIMENTAL=1 ./cosign verify-attestation --type cyclonedx "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity-regexp=.* --certificate-oidc-issuer-regexp=.*
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct=true
   allow_failure: true
