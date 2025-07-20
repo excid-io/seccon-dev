@@ -1,6 +1,4 @@
 # This version of the pipeline uses STaaS instead of cosign
-variables:
-  TAG: "latest"
 
 stages:
   - secret_scanning
@@ -106,7 +104,7 @@ kaniko-build:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:$TAG"
+      --destination "${CI_REGISTRY_IMAGE}:1.0.7"
       --image-name-with-digest-file tmp.hash
     - sed -n 's/.*@sha256:\([a-f0-9]\+\)/\1/p' tmp.hash > img.hash
   allow_failure: true
@@ -148,9 +146,9 @@ staas-sign-container-image:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
   script:
     - export COMMENT=container-signature-$CI_PIPELINE_URL
-    - python3 /staas/staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:$TAG
+    - python3 /staas/staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
   after_script:
-    - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:$TAG" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct
+    - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct
   allow_failure: true
   artifacts:
     when: always
@@ -175,10 +173,10 @@ staas-sign-container-image:
 #     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
 #   script:
 #     - export COMMENT=container-signature-$CI_PIPELINE_URL
-#     - python3 staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:$TAG
+#     - python3 staas-cli.py sign-image -t $STAAS_API_KEY -c $COMMENT -o payload.json.bundle $CI_REGISTRY_IMAGE:1.0.7
 #   after_script:
 #     - wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem
-#     - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:$TAG" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
+#     - COSIGN_EXPERIMENTAL=1 cosign verify "$CI_REGISTRY_IMAGE:1.0.7" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer=https://staas.excid.io --certificate-chain ./staas-ca.pem --insecure-ignore-sct
 #   allow_failure: true
 #   artifacts:
 #     when: always
@@ -218,8 +216,8 @@ trivy_sbom:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
   script:
-    - docker pull "$CI_REGISTRY_IMAGE:$TAG"
-    - trivy image --format cyclonedx -o image.sbom.json "$CI_REGISTRY_IMAGE:$TAG"
+    - docker pull "$CI_REGISTRY_IMAGE:1.0.7"
+    - trivy image --format cyclonedx -o image.sbom.json "$CI_REGISTRY_IMAGE:1.0.7"
   allow_failure: true
   artifacts:
     when: always
@@ -240,9 +238,9 @@ staas-provenance:
     # that contains the predicate. we make extract the predicate and pass it to staas-cli
     - jq -r '.predicate' ./artifacts-metadata.json > slsa-predicate.json
     # 3. the rest is done using staas-cli
-    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:$TAG --token $STAAS_API_KEY --predicate-type "https://slsa.dev/provenance/v1" --predicate ./slsa-predicate.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
+    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate-type "https://slsa.dev/provenance/v1" --predicate ./slsa-predicate.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
   after_script:
-    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:$TAG" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct=true
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type "https://slsa.dev/provenance/v1" --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct=true
   allow_failure: true
 
 staas-sbom:
@@ -255,9 +253,9 @@ staas-sbom:
     # for sbom attestation: 1. generate sbom 2. pass sbom as predicate to staas-cli
     # 1 was done in trivy-sbom job
     # 2 run staas-cli.py
-    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:$TAG --token $STAAS_API_KEY --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
+    - python3 /staas/staas-cli.py attest-image $CI_REGISTRY_IMAGE:1.0.7 --token $STAAS_API_KEY --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom.json --root-ca-file /staas/staas-ca.pem --subject $STAAS_EMAIL
   after_script:
-    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:$TAG" --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct=true
+    - COSIGN_EXPERIMENTAL=1 cosign verify-attestation "$CI_REGISTRY_IMAGE:1.0.7" --type cyclonedx --certificate-identity=$STAAS_EMAIL --certificate-oidc-issuer="https://staas.excid.io" --certificate-chain /staas/staas-ca.pem --insecure-ignore-sct=true
   allow_failure: true
 
 # For push-based deployments you can have two extra jobs similar to the following ones
