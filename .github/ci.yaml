@@ -3,10 +3,6 @@ name: Build Container Image
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - .github/workflows/ci_image.yaml
-      - staas-cli.py
-      - Dockerfile
 
 jobs:
   scan-build-and-push-image:
