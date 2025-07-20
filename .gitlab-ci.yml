@@ -56,7 +56,7 @@ kaniko-build:
       exists:
         - Dockerfile
 
-staas-sign-container-image:
+sign-container-image:
   stage: sign_image
   needs: ["kaniko-build"]
   image: ghcr.io/excid-io/staas-cli:latest
