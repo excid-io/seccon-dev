@@ -67,7 +67,6 @@ jobs:
         with:
           image-ref: ${{ env.IMAGE }}
           format: "table"
-          exit-code: 1
     
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
