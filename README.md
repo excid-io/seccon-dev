@@ -32,7 +32,7 @@ This pipeline promotes a secure CI/CD process by detecting and mitigating securi
 
 Artifact attestations and signatures ensure the integrity and authenticity of specific artifacts. We create container signatures plus [Provenance and SBOM](https://slsa.dev) attestations. STaaS is used to sign them. As mentioned above, [staas-cli](https://github.com/excid-io/staas-cli) is the client tool for STaaS platform. It comes with a container image containing all the runtime dependencies, which perfectly suits for GitLab CI setups (see jobs *staas-sign-container-image*, *staas-provenance*, *staas-sbom* in .gitlab-ci.yaml). 
 
-## Folder structure
+## Folder Structure
 
 - `apps`: contains all .yaml and `kustomization` files for our k8s cluster.
 - `assets`: images and other files useful for the repo.
@@ -90,7 +90,7 @@ In order to create the attestation for this provenance we use STaaS, a Software 
 
 ![alt text](assets/diagram.jpg)
 
-## Attack scenarios
+## Attack Scenarios
 
 In this repo we present some attack scenarios. See `attacks` folder for more.
 
@@ -125,6 +125,18 @@ sudo gitlab-runner run
 ```
 
 Match the settings to your preferences and security requirements.
+
+## Work on GitHub
+
+GitHub Actions is the CI/CD environment of GitHub. In [this repo](https://github.com/excid-io/seccon-dev) we uploaded the exact same source code as this repository but added the `.github/workflows` folder that contains one workflow. 
+
+This workflows emulates the same pipeline as in GitLab:
+- security checks
+- build a conatiner image 
+- container image signatures
+- container image attestations
+
+The difference is in how `staas-cli` is used as a binary (see Releases in [staas-cli repo](https://github.com/excid-io/staas-cli/releases)) instead of a container image that fits better in GitLab CI platform.
 
 ## Related Posts
 
