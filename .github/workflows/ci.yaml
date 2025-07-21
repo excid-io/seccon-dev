@@ -7,8 +7,11 @@ on:
       - .github/workflows/ci.yaml
       - Dockerfile
 
+env:
+  IMAGE: "ghcr.io/excid-io/seccon-dev:latest"
+
 jobs:
-  scan-build-and-push-image:
+  build-image:
     permissions: write-all
     runs-on: ubuntu-latest
 
@@ -48,7 +51,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ghcr.io/excid-io/seccon-dev:latest
+          tags: ${{ env.IMAGE }}
           context: .
       
       - name: STaaS Sign Container Image
@@ -57,7 +60,30 @@ jobs:
         run: |
           wget https://github.com/excid-io/staas-cli/releases/download/main/staas-cli
           chmod +x ./staas-cli
-          ./staas-cli sign-image ghcr.io/excid-io/seccon-dev:latest --token ${{ secrets.STAAS_API_KEY }} --comment $COMMENT
+          ./staas-cli sign-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --comment $COMMENT
 
-      - name: ls
-        run: ls -la
+      - name: Run Trivy Vulnerability Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}
+          format: "table"
+          exit-code: 1
+    
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.IMAGE }}
+          output-file: "image.sbom"
+          format: 'cyclonedx-json'
+          upload-artifact: false
+
+      - name: STaaS SBOM Attestation
+        run: |
+          wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem 
+          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} \ 
+            --predicate-type "https://cyclonedx.org/bom" \ 
+            --predicate ./image.sbom \ 
+            --root-ca-file ./staas-ca.pem \ 
+            --subject $STAAS_EMAIL
+
+      
