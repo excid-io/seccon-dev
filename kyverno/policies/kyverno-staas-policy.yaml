@@ -57,7 +57,7 @@ spec:
                 subjectRegExp: ".*@excid.io"
                 issuer: "https://staas.excid.io"
                 rekor:
-                  ignoreTlog: true
+                  # ignoreTlog: true
                   url: https://rekor.sigstore.dev
                 ctlog:
                   ignoreSCT: true
@@ -98,7 +98,7 @@ spec:
                 subjectRegExp: ".*@excid.io"
                 issuer: "https://staas.excid.io"
                 rekor:
-                  ignoreTlog: true
+                  # ignoreTlog: true
                   url: https://rekor.sigstore.dev
                 ctlog:
                   ignoreSCT: true
