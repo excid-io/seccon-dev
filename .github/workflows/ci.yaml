@@ -3,6 +3,9 @@ name: Build Container Image
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - .github/workflows/ci.yaml
+      - Dockerfile
 
 jobs:
   scan-build-and-push-image:
@@ -15,12 +18,12 @@ jobs:
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@v2.3.9
         env:
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
       - uses: actions/setup-python@v5.3.0
         with:
           python-version: '3.12'
-      - name: nodejsscan scan
+      - name: NodeJS Scan
         id: njsscan
         uses: ajinabraham/njsscan-action@master
         with:
@@ -29,7 +32,6 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
-
 
       - name: Log into registry ghcr.io
         uses: docker/login-action@v3.3.0
@@ -48,3 +50,12 @@ jobs:
           push: true
           tags: ghcr.io/excid-io/seccon-dev:latest
           context: .
+      
+      - name: STaaS Sign Container Image
+        env:
+          COMMENT: gh-actions-sign-image-$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+        run: |
+          wget https://github.com/excid-io/staas-cli/releases/download/main/staas-cli
+          chmod +x ./staas-cli
+          ./staas-cli sign-image ghcr.io/excid-io/seccon-dev:latest --token ${{ secrets.STAAS_API_KEY }} --comment $COMMENT
+
