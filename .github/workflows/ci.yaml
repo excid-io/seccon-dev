@@ -79,6 +79,6 @@ jobs:
       - name: STaaS SBOM Attestation
         run: |
           wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem 
-          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom --root-ca-file ./staas-ca.pem --subject $STAAS_EMAIL
+          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
 
       
