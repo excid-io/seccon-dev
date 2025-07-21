@@ -84,4 +84,9 @@ jobs:
       - name: Generate provenance
         uses: slsa-framework/github-actions-demo@v0.1
         with:
-          artifact_path: ${{ env.IMAGE }}
+          artifact_path: "image.sbom"
+
+      - name: sth
+        run: |
+          ls -la
+          cat build.provenance
