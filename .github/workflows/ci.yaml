@@ -59,3 +59,5 @@ jobs:
           chmod +x ./staas-cli
           ./staas-cli sign-image ghcr.io/excid-io/seccon-dev:latest --token ${{ secrets.STAAS_API_KEY }} --comment $COMMENT
 
+      - name: ls
+        run: ls -la
