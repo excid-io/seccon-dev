@@ -53,7 +53,7 @@ jobs:
       
       - name: STaaS Sign Container Image
         env:
-          COMMENT: gh-actions-sign-image-$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          COMMENT: gh-actions-sign-image-${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}
         run: |
           wget https://github.com/excid-io/staas-cli/releases/download/main/staas-cli
           chmod +x ./staas-cli
