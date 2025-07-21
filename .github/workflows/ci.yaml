@@ -85,8 +85,3 @@ jobs:
         uses: slsa-framework/github-actions-demo@v0.1
         with:
           artifact_path: ${{ env.IMAGE }}
-
-      - name: Upload provenance
-        uses: actions/upload-artifact@v2
-        with:
-          path: build.provenance
