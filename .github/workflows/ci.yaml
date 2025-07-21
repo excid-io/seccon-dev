@@ -81,4 +81,12 @@ jobs:
           wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem 
           ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
 
-      
+      - name: Generate provenance
+        uses: slsa-framework/github-actions-demo@v0.1
+        with:
+          artifact_path: ${{ env.IMAGE }}
+
+      - name: Upload provenance
+        uses: actions/upload-artifact@v2
+        with:
+          path: build.provenance
