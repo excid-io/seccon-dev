@@ -9,11 +9,16 @@ on:
 
 env:
   IMAGE: "ghcr.io/excid-io/seccon-dev:latest"
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-image:
+  build:
     permissions: write-all
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - uses: actions/checkout@v4.2.2
@@ -71,7 +76,22 @@ jobs:
         with:
           image-ref: ${{ env.IMAGE }}
           format: "table"
+
+      - name: Output image
+        id: image
+        run: |
+          # NOTE: Set the image as an output because the `env` context is not
+          # available to the inputs of a reusable workflow call.
+          image_name="${IMAGE_REGISTRY}/${IMAGE_NAME}"
+          echo "image=$image_name" >> "$GITHUB_OUTPUT"
+
     
+  staas-sbom-attestation:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    needs: [build]
+
+    steps:
       - name: Generate SBOM
         id: sbom-gen
         uses: anchore/sbom-action@v0
@@ -84,23 +104,26 @@ jobs:
       - name: STaaS SBOM Attestation
         id: staas-attest-sbom
         run: |
+          wget https://github.com/excid-io/staas-cli/releases/download/main/staas-cli
+          chmod +x ./staas-cli
           wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem 
           ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
 
-      # - name: Generate provenance
-      #   uses: slsa-framework/github-actions-demo@v0.1
-      #   with:
-      #     artifact_path: "image.sbom"
 
-      - name: Generate SLSA Provenance
-        id: slsa-provenance-gen
-        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
-        with:
-          image: ${{ env.IMAGE }}
-          digest: ${{ steps.build.outputs.digest }}
-          registry-username: ${{ github.actor }}
-        secrets:
-          registry-password: ${{ secrets.GITHUB_TOKEN }}
+  staas-provenance-attestation:
+    needs: [staas-sbom-attestation]
+    permissions:
+      actions: read # for detecting the Github Actions environment.
+      id-token: write # for creating OIDC tokens for signing.
+      packages: write # for uploading attestations.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
+    with:
+      image: ${{ needs.build.outputs.image }}
+      digest: ${{ needs.build.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+
 
       - name: 'Setup jq'
         id: jq-install
