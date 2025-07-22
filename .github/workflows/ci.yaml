@@ -129,6 +129,8 @@ jobs:
       
       - name: STaaS SLSA Provenance Attestation
         id: staas-attest-slsa-provenance
+        env:
+          GITHUB_CONTEXT: "${{ toJSON(github) }}"
         run: |
           wget https://github.com/slsa-framework/slsa-github-generator/releases/download/v2.1.0/slsa-generator-container-linux-amd64
           chmod +x slsa-generator-container-linux-amd64
