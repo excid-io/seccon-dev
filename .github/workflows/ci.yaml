@@ -88,5 +88,18 @@ jobs:
 
       - name: STaaS SLSA Provenance Attestation
         run: |
+          ls -la
+          cat build.provenance
+      
+      - name: 'Setup jq'
+        uses: dcarbone/install-jq-action@v3
+        with:
+          version: "1.7.1"
+      
+      - name: STaaS SLSA Provenance Attestation
+        run: |
+          jq --version
+          jq -r '.predicate' ./build.provenance > slsa.predicate
+          cat slsa.predicate
           ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type https://in-toto.io/Statement/v0.1" --predicate ./build.provenance --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
           
