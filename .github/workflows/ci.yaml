@@ -93,8 +93,6 @@ jobs:
       
       - name: STaaS SLSA Provenance Attestation
         run: |
-          jq --version
           jq -r '.predicate' ./build.provenance > slsa.predicate
-          cat slsa.predicate
-          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://in-toto.io/Statement/v0.1" --predicate ./build.provenance --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
+          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://in-toto.io/Statement/v0.1" --predicate ./slsa.predicate --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
           
