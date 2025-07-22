@@ -125,15 +125,15 @@ jobs:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
 
-      - name: 'Setup jq'
-        id: jq-install
-        uses: dcarbone/install-jq-action@v3
-        with:
-          version: "1.7.1"
-      
-      - name: STaaS SLSA Provenance Attestation
-        id: staas-attest-slsa-provenance
-        run: |
-          jq -r '.predicate' ./build.provenance > slsa.predicate
-          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://in-toto.io/Statement/v0.1" --predicate ./slsa.predicate --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
-          
+        # - name: 'Setup jq'
+        #   id: jq-install
+        #   uses: dcarbone/install-jq-action@v3
+        #   with:
+        #     version: "1.7.1"
+        
+        # - name: STaaS SLSA Provenance Attestation
+        #   id: staas-attest-slsa-provenance
+        #   run: |
+        #     jq -r '.predicate' ./build.provenance > slsa.predicate
+        #     ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://in-toto.io/Statement/v0.1" --predicate ./slsa.predicate --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
+                
