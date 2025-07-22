@@ -120,12 +120,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           logout: false
-
-      - name: 'Setup jq'
-        id: jq-install
-        uses: dcarbone/install-jq-action@v3
-        with:
-          version: "1.7.1"
       
       - name: STaaS SLSA Provenance Attestation
         id: staas-attest-slsa-provenance
@@ -133,12 +127,13 @@ jobs:
           GITHUB_CONTEXT: "${{ toJSON(github) }}"
           VARS_CONTEXT: "${{ toJSON(vars) }}"
         run: |
+          # slsa-generator-container-linux-amd64 generates the provenance predicate
           wget https://github.com/slsa-framework/slsa-github-generator/releases/download/v2.1.0/slsa-generator-container-linux-amd64
           chmod +x slsa-generator-container-linux-amd64
-          ls -la
-          ./slsa-generator-container-linux-amd64 generate --predicate="build.provenance"
-          ls -la
-          cat build.provenance
-          jq -r '.predicate' ./build.provenance > slsa.predicate
-          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://in-toto.io/Statement/v0.1" --predicate ./slsa.predicate --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
+          ./slsa-generator-container-linux-amd64 generate --predicate="build.predicate"
+          # then have staas-cli create the provenance attestation
+          wget https://github.com/excid-io/staas-cli/releases/download/main/staas-cli
+          chmod +x ./staas-cli
+          wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem 
+          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://in-toto.io/Statement/v0.1" --predicate ./build.predicate --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
               
