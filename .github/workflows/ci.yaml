@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v4.2.2
 
       - name: Gitleaks
+        id: gitleaks-scan
         uses: gitleaks/gitleaks-action@v2.3.9
         env:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
@@ -48,6 +49,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v6
         with:
           push: true
@@ -55,6 +57,7 @@ jobs:
           context: .
       
       - name: STaaS Sign Container Image
+        id: staas-sign-image
         env:
           COMMENT: gh-actions-sign-image-${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}
         run: |
@@ -63,12 +66,14 @@ jobs:
           ./staas-cli sign-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --comment $COMMENT
 
       - name: Run Trivy Vulnerability Scan
+        id: trivy-vuln
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.IMAGE }}
           format: "table"
     
       - name: Generate SBOM
+        id: sbom-gen
         uses: anchore/sbom-action@v0
         with:
           image: ${{ env.IMAGE }}
@@ -77,21 +82,34 @@ jobs:
           upload-artifact: false
 
       - name: STaaS SBOM Attestation
+        id: staas-attest-sbom
         run: |
           wget http://staas.excid.io/Sign/Certificate -O staas-ca.pem 
           ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://cyclonedx.org/bom" --predicate ./image.sbom --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
 
-      - name: Generate provenance
-        uses: slsa-framework/github-actions-demo@v0.1
+      # - name: Generate provenance
+      #   uses: slsa-framework/github-actions-demo@v0.1
+      #   with:
+      #     artifact_path: "image.sbom"
+
+      - name: Generate SLSA Provenance
+        id: slsa-provenance-gen
+        uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
         with:
-          artifact_path: "image.sbom"
+          image: ${{ env.IMAGE }}
+          digest: ${{ steps.build.outputs.digest }}
+          registry-username: ${{ github.actor }}
+        secrets:
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 'Setup jq'
+        id: jq-install
         uses: dcarbone/install-jq-action@v3
         with:
           version: "1.7.1"
       
       - name: STaaS SLSA Provenance Attestation
+        id: staas-attest-slsa-provenance
         run: |
           jq -r '.predicate' ./build.provenance > slsa.predicate
           ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type "https://in-toto.io/Statement/v0.1" --predicate ./slsa.predicate --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
