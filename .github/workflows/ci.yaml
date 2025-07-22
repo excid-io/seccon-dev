@@ -86,7 +86,7 @@ jobs:
         with:
           artifact_path: "image.sbom"
 
-      - name: sth
+      - name: STaaS SLSA Provenance Attestation
         run: |
-          ls -la
-          cat build.provenance
+          ./staas-cli attest-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --predicate-type https://in-toto.io/Statement/v0.1" --predicate ./build.provenance --root-ca-file ./staas-ca.pem --subject ${{ secrets.STAAS_EMAIL }}
+          
