@@ -59,6 +59,13 @@ jobs:
           tags: ${{ env.IMAGE }}
           context: .
       
+      - name: Run Trivy Vulnerability Scan
+        id: trivy-vuln
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE }}
+          format: "table"
+      
       - name: STaaS Sign Container Image
         id: staas-sign-image
         env:
@@ -68,12 +75,6 @@ jobs:
           chmod +x ./staas-cli
           ./staas-cli sign-image ${{ env.IMAGE }} --token ${{ secrets.STAAS_API_KEY }} --comment $COMMENT
 
-      - name: Run Trivy Vulnerability Scan
-        id: trivy-vuln
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.IMAGE }}
-          format: "table"
     
   staas-sbom-attestation:
     permissions: write-all
@@ -124,7 +125,7 @@ jobs:
       - name: STaaS SLSA Provenance Attestation
         id: staas-attest-slsa-provenance
         env:
-          GITHUB_CONTEXT: "${{ toJSON(github) }}"
+          GITHUB_CONTEXT: "${{ toJSON(github) }}" # set these two variables for slsa-generator-container-linux-amd64
           VARS_CONTEXT: "${{ toJSON(vars) }}"
         run: |
           # slsa-generator-container-linux-amd64 generates the provenance predicate
