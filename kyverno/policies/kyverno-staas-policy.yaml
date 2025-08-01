@@ -115,6 +115,6 @@ spec:
                   -----END CERTIFICATE-----
           conditions:
           - all:
-            - key: "{{ predicate.buildDefinition.resolvedDependencies[0].uri }}"
+            - key: "{{ buildDefinition.resolvedDependencies[0].uri }}"
               operator: Equals
               value: "https://gitlab.com/lefosg/excid-cicd-demo-project"
