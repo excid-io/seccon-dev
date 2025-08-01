@@ -141,3 +141,4 @@ The difference is in how `staas-cli` is used as a binary (see Releases in [staas
 ## Related Posts
 
 1. [GitLab Artifact Attestations with STaaS](https://medium.com/@excid/gitlab-artifact-attestations-with-staas-809b4fb5a9fc)
+1. [Container Signatures and Attestations with STaaS and Kyverno](https://medium.com/@excid/container-signatures-and-attestations-with-staas-and-kyverno-9336ab8800de)
